@@ -40,12 +40,16 @@ export class CacheService {
     }
   }
 
-  private createCacheKey(obj: DecisionCacheKey | ModelPredictionCacheKey): string {
-    const key = JSON.stringify(obj);
-    if (!key) {
-      throw new Error('Failed to create cache key');
-    }
-    return key;
+  private createCacheKey(params: Record<string, any>): string {
+    const sortedKeys = Object.keys(params).sort();
+    const keyParts = sortedKeys.map(key => {
+      const value = params[key];
+      if (value === undefined) {
+        return `${key}:null`;
+      }
+      return `${key}:${value}`;
+    });
+    return keyParts.join('|');
   }
 
   private getGamePhase(gameState: GameState): 'early' | 'mid' | 'late' {

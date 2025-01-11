@@ -68,4 +68,15 @@ export class ErrorHandlingService {
   getErrorStats(): ErrorStats {
     return { ...this.errorStats };
   }
+
+  handleMLError(error: Error, gameState: GameState): Error {
+    console.error('ML Error:', error);
+    this.recordError({
+      type: 'ML_ERROR',
+      message: error.message,
+      timestamp: Date.now(),
+      gameState: gameState
+    });
+    return new Error(`ML processing failed: ${error.message}`);
+  }
 } 

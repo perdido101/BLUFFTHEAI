@@ -266,29 +266,48 @@ export class MLIntegrationService {
     try {
       const [patterns, playerStats, optimalStrategy, personalityTraits] = await Promise.all([
         this.patternRecognition.analyzePatterns(gameState),
-        this.aiStrategy.getPlayerAnalysis(),
+        this.aiStrategy.getPlayerAnalysis(gameState),
         this.adaptiveLearning.getOptimalStrategy(gameState),
-        this.aiPersonality.getPersonalityTraits()
+        this.aiPersonality.getPersonalityTraits(gameState)
       ]);
 
       const difficultyModifiers = await this.adaptiveDifficulty.getDifficultyModifiers(gameState);
 
       let chatAnalysis: ChatAnalysis | undefined;
       if (playerChat) {
-        chatAnalysis = await this.chatAnalysis.analyzeChatMessage(playerChat);
+        chatAnalysis = await this.chatAnalysis.analyzeChatMessage(playerChat, gameState);
       }
 
       const insights: MLInsights = {
-        patterns,
-        playerStats,
-        optimalStrategy,
-        personalityTraits,
+        patterns: {
+          likelyToBluff: patterns.likelyToBluff,
+          likelyToChallenge: patterns.likelyToChallenge
+        },
+        playerStats: {
+          winRate: playerStats.winRate,
+          bluffSuccessRate: playerStats.bluffSuccessRate,
+          challengeSuccessRate: playerStats.challengeSuccessRate,
+          totalGames: playerStats.totalGames,
+          averageMovesPerGame: playerStats.averageMovesPerGame
+        },
+        optimalStrategy: {
+          recommendedAction: optimalStrategy.recommendedAction,
+          confidence: optimalStrategy.confidence,
+          alternativeActions: optimalStrategy.alternativeActions
+        },
+        personalityTraits: {
+          aggressiveness: personalityTraits.aggressiveness,
+          deceptiveness: personalityTraits.deceptiveness,
+          confidence: personalityTraits.confidence,
+          impulsiveness: personalityTraits.impulsiveness,
+          adaptability: personalityTraits.adaptability
+        },
         chatAnalysis
       };
 
       return insights;
     } catch (error) {
-      throw this.errorHandler.handleMLError(error);
+      throw this.errorHandler.handleMLError(error, gameState);
     }
   }
 
