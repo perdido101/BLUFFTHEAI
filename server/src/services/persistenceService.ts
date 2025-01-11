@@ -6,64 +6,30 @@ const LEARNING_FILE = path.join(DATA_DIR, 'learning.json');
 const PATTERNS_FILE = path.join(DATA_DIR, 'patterns.json');
 
 export class PersistenceService {
+  private data: Map<string, any>;
+
+  constructor() {
+    this.data = new Map();
+  }
+
   async init() {
-    try {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-    } catch (error) {
-      console.error('Failed to create data directory:', error);
-    }
+    // Initialize persistence layer
+    console.log('Initializing persistence service');
   }
 
-  async saveLearningData(data: any) {
-    try {
-      await fs.writeFile(LEARNING_FILE, JSON.stringify(data, this.mapReplacer));
-    } catch (error) {
-      console.error('Failed to save learning data:', error);
-    }
+  async save(key: string, value: any) {
+    this.data.set(key, value);
   }
 
-  async loadLearningData() {
-    try {
-      const data = await fs.readFile(LEARNING_FILE, 'utf-8');
-      return JSON.parse(data, this.mapReviver);
-    } catch (error) {
-      return null;
-    }
+  async load(key: string) {
+    return this.data.get(key);
   }
 
-  async savePatterns(data: any) {
-    try {
-      await fs.writeFile(PATTERNS_FILE, JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to save patterns:', error);
-    }
+  async saveQTable(qTable: any) {
+    await this.save('qTable', qTable);
   }
 
-  async loadPatterns() {
-    try {
-      const data = await fs.readFile(PATTERNS_FILE, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  private mapReplacer(key: string, value: any) {
-    if (value instanceof Map) {
-      return {
-        dataType: 'Map',
-        value: Array.from(value.entries()),
-      };
-    }
-    return value;
-  }
-
-  private mapReviver(key: string, value: any) {
-    if (typeof value === 'object' && value !== null) {
-      if (value.dataType === 'Map') {
-        return new Map(value.value);
-      }
-    }
-    return value;
+  async loadQTable() {
+    return await this.load('qTable') || {};
   }
 } 
