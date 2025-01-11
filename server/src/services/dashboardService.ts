@@ -20,6 +20,11 @@ interface DashboardMetrics {
       endpoint: string;
       time: number;
     }>;
+    gameStats: {
+      totalMoves: number;
+      successfulBluffs: number;
+      failedBluffs: number;
+    };
   };
   rateLimiting: {
     totalRequests: number;
@@ -69,7 +74,12 @@ export class DashboardService {
       performance: {
         averageResponseTime: performanceMetrics.averageResponseTime,
         averageAIDecisionTime: performanceMetrics.averageAIDecisionTime,
-        slowestEndpoints: performanceMetrics.slowestEndpoints
+        slowestEndpoints: performanceMetrics.slowestEndpoints,
+        gameStats: {
+          totalMoves: performanceMetrics.totalMoves,
+          successfulBluffs: performanceMetrics.successfulBluffs,
+          failedBluffs: performanceMetrics.failedBluffs
+        }
       },
       rateLimiting: {
         totalRequests: rateLimitStats.totalRequests,
