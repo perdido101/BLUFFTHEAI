@@ -90,7 +90,7 @@ export class GameService {
         } else {
           // Challenger was wrong, they pick up the pile
           if (gameState.currentTurn === 'ai') {
-            newState.aiHand += gameState.centerPile.length;
+            newState.aiHand = [...newState.aiHand, ...gameState.centerPile];
           } else {
             newState.playerHand = [...newState.playerHand, ...gameState.centerPile];
           }

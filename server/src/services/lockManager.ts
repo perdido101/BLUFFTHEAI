@@ -1,76 +1,29 @@
 import Redis from 'ioredis';
-import { promisify } from 'util';
-import { logger } from './loggerService';
-
-interface LockOptions {
-  ttl: number;        // Time to live in milliseconds
-  retryCount: number; // Number of retry attempts
-  retryDelay: number; // Delay between retries in milliseconds
-}
 
 export class LockManager {
   private redis: Redis;
-  private readonly defaultOptions: LockOptions = {
-    ttl: 30000,       // 30 seconds
-    retryCount: 3,
-    retryDelay: 1000  // 1 second
-  };
 
-  constructor(redisUrl: string) {
-    this.redis = new Redis(redisUrl);
+  constructor() {
+    this.redis = new Redis(process.env.REDIS_URL);
   }
 
-  async acquire(key: string, options: Partial<LockOptions> = {}): Promise<boolean> {
-    const opts = { ...this.defaultOptions, ...options };
-    const lockKey = `lock:${key}`;
-    const lockValue = Date.now().toString();
-
-    for (let i = 0; i <= opts.retryCount; i++) {
-      try {
-        const acquired = await this.redis.set(
-          lockKey,
-          lockValue,
-          'PX',
-          opts.ttl,
-          'NX'
-        );
-
-        if (acquired) {
-          return true;
-        }
-
-        if (i < opts.retryCount) {
-          await this.delay(opts.retryDelay);
-        }
-      } catch (error) {
-        logger.logError(error, {
-          context: 'LockManager.acquire',
-          key,
-          attempt: i
-        });
-      }
-    }
-
-    return false;
-  }
-
-  async release(key: string): Promise<void> {
-    const lockKey = `lock:${key}`;
+  async acquireLock(key: string, ttl: number = 30000): Promise<boolean> {
     try {
-      await this.redis.del(lockKey);
-    } catch (error) {
-      logger.logError(error, {
-        context: 'LockManager.release',
-        key
-      });
+      const result = await this.redis.set(key, '1', 'PX', ttl, 'NX');
+      return result === 'OK';
+    } catch (error: any) {
+      console.error('Failed to acquire lock:', error instanceof Error ? error.message : String(error));
+      return false;
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async cleanup(): Promise<void> {
-    await this.redis.quit();
+  async releaseLock(key: string): Promise<boolean> {
+    try {
+      const result = await this.redis.del(key);
+      return result === 1;
+    } catch (error: any) {
+      console.error('Failed to release lock:', error instanceof Error ? error.message : String(error));
+      return false;
+    }
   }
 } 

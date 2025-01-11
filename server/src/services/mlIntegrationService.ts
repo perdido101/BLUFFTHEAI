@@ -156,7 +156,10 @@ export class MLIntegrationService {
 
       return decision;
     } catch (error) {
-      return this.errorHandler.handleDecisionError(error, gameState);
+      if (error instanceof Error) {
+        return this.errorHandler.handleDecisionError(error, gameState);
+      }
+      return this.errorHandler.handleDecisionError(new Error(String(error)), gameState);
     }
   }
 
@@ -261,7 +264,11 @@ export class MLIntegrationService {
       try {
         await this.cacheService.invalidateDecisionCache(gameState);
       } catch (error) {
-        this.errorHandler.handleCacheError(error, 'invalidateDecisionCache');
+        if (error instanceof Error) {
+          this.errorHandler.handleCacheError(error, 'invalidateDecisionCache');
+        } else {
+          this.errorHandler.handleCacheError(new Error(String(error)), 'invalidateDecisionCache');
+        }
       }
 
       // Calculate reward based on action result
@@ -301,7 +308,7 @@ export class MLIntegrationService {
       riskToleranceMultiplier: number;
     }
   ): boolean {
-    const bluffProbability = this.calculateBluffProbability(
+    let bluffProbability = this.calculateBluffProbability(
       gameState,
       mlInsights.patterns,
       mlInsights.playerStats,
@@ -311,11 +318,9 @@ export class MLIntegrationService {
     // Consider chat analysis in bluff probability if available
     if (mlInsights.chatAnalysis) {
       const chatBluffWeight = mlInsights.chatAnalysis.confidence;
-      const adjustedBluffProb = 
+      bluffProbability = 
         bluffProbability * (1 - chatBluffWeight) +
         (mlInsights.chatAnalysis.detectedBluff ? 1 : 0) * chatBluffWeight;
-      
-      bluffProbability = adjustedBluffProb;
     }
 
     // Combine ML insights with personality traits and difficulty

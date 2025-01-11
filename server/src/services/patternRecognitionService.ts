@@ -19,10 +19,6 @@ interface PlayerPattern {
   challengePatterns: ChallengePatterns;
 }
 
-interface Patterns extends PlayerPattern {
-  // Additional properties if any
-}
-
 export class PatternRecognitionService {
   private patterns: PlayerPattern = {
     moveHistory: [],
@@ -49,7 +45,7 @@ export class PatternRecognitionService {
   private async loadPatterns() {
     const data = await this.persistenceService.loadPatterns();
     if (data) {
-      this.patterns = data;
+      this.patterns = data as PlayerPattern;
     }
   }
 
