@@ -1,5 +1,19 @@
 import { GameState, GameAction } from '../types';
-import { ChatAnalysisResult } from './chatAnalysisService';
+import { ChatAnalysisService } from './chatAnalysisService';
+
+// Re-export the ChatAnalysisResult interface
+export interface ChatAnalysisResult {
+  sentiment: {
+    score: number;
+    confidence: number;
+    dominantEmotion: string;
+  };
+  bluffIndicators: {
+    probability: number;
+    confidence: number;
+  };
+  keyPhrases: string[];
+}
 
 interface ResponseContext {
   gameState: GameState;
@@ -198,17 +212,17 @@ export class AIResponseService {
   }
 
   private determineGamePhase(gameState: GameState): 'early' | 'mid' | 'late' {
-    const totalCards = gameState.playerHand.length + gameState.aiHand;
+    const totalCards = gameState.playerHand.length + gameState.aiHand.length;
     if (totalCards > 40) return 'early';
     if (totalCards > 20) return 'mid';
     return 'late';
   }
 
   private isAIBluffing(lastAction?: GameAction): boolean {
-    if (!lastAction || lastAction.type !== 'PLAY_CARDS') return false;
-    return lastAction.payload?.cards.some(card => 
-      card.value !== lastAction.payload.declaredValue
-    ) || false;
+    if (!lastAction || lastAction.type !== 'PLAY_CARDS' || !lastAction.payload) return false;
+    return lastAction.payload.cards.some(card => 
+      card.value !== lastAction.payload!.declaredValue
+    );
   }
 
   private selectBestTemplate(

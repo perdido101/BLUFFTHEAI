@@ -41,7 +41,11 @@ export class CacheService {
   }
 
   private createCacheKey(obj: DecisionCacheKey | ModelPredictionCacheKey): string {
-    return JSON.stringify(obj);
+    const key = JSON.stringify(obj);
+    if (!key) {
+      throw new Error('Failed to create cache key');
+    }
+    return key;
   }
 
   private getGamePhase(gameState: GameState): 'early' | 'mid' | 'late' {
@@ -64,7 +68,7 @@ export class CacheService {
   }
 
   async set<T>(key: string, value: T, ttl: number = CacheService.DEFAULT_TTL): Promise<void> {
-    if (!key) {
+    if (!key || key.trim() === '') {
       throw new Error('Key cannot be undefined or empty');
     }
     
