@@ -11,10 +11,9 @@ restartPolicyType = "on_failure"
 [nixpacks]
 node-version = "18"
 
-[service.backend]
-directory = "server"
-name = "backend"
-
 [service.frontend]
-directory = "client"
-name = "frontend" 
+buildCommand = "cd client && npm install && npm run build"
+startCommand = "cd client && npx serve -s build"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure" 
