@@ -27,9 +27,9 @@ RUN set -eux; \
     apk update && \
     # Install build tools
     apk add --no-cache --virtual .build-deps \
-        python3~=3.11 \
-        make~=4.4 \
-        g++~=13.2 \
+        python3 \
+        make \
+        g++ \
     && \
     # Update npm and verify installation
     npm install -g npm@latest && \
@@ -75,9 +75,9 @@ RUN set -eux; \
     apk update && \
     # Install build tools
     apk add --no-cache --virtual .build-deps \
-        python3~=3.11 \
-        make~=4.4 \
-        g++~=13.2 \
+        python3 \
+        make \
+        g++ \
     && \
     # Update npm and verify installation
     npm install -g npm@latest && \
@@ -111,7 +111,7 @@ ENV NODE_ENV=development \
     NPM_CONFIG_UPDATE_NOTIFIER=false \
     NPM_CONFIG_FUND=false
 
-# Install build tools with version pinning
+# Install build tools
 RUN set -eux; \
     # Configure Alpine mirrors
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
@@ -119,9 +119,9 @@ RUN set -eux; \
     apk update && \
     # Install build dependencies
     apk add --no-cache \
-        python3~=3.11 \
-        make~=4.4 \
-        g++~=12.2 \
+        python3 \
+        make \
+        g++ \
         git \
     && \
     # Setup Python symlink
