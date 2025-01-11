@@ -134,7 +134,8 @@ RUN set -eux; \
     rm -rf /var/cache/apk/*
 
 # Copy configuration files first
-COPY package*.json tsconfig.json ./
+COPY tsconfig.json ./
+COPY package*.json ./
 
 # Verify configuration files
 RUN set -eux; \
