@@ -5,6 +5,12 @@ export class PerformanceMonitorService {
     totalMoves: number;
     successfulBluffs: number;
     failedBluffs: number;
+  } = {
+    startTime: undefined,
+    endTime: undefined,
+    totalMoves: 0,
+    successfulBluffs: 0,
+    failedBluffs: 0
   };
 
   constructor() {

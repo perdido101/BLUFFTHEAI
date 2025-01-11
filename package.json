@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "dist/server/src/server.js",
   "scripts": {
-    "start": "node dist/server/src/server.js",
+    "start": "node dist/server.js",
     "build": "tsc",
     "dev": "nodemon server/src/server.ts",
     "test": "jest",
-    "postinstall": "npm run build",
+    "postinstall": "tsc",
     "deploy": "npm run build && npm start"
   },
   "keywords": ["card-game", "bluff", "ai", "server"],

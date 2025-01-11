@@ -2,22 +2,17 @@ FROM node:18
 
 WORKDIR /app
 
-# Install TypeScript globally
-RUN npm install -g typescript
-
-# Copy package files first for better caching
-COPY server/package*.json ./
-COPY server/tsconfig.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
-RUN npm install typescript @types/node --save-dev
 
-# Copy the entire source code
-COPY server/src ./src
+# Copy source code
+COPY . .
 
-# Build server
-RUN npx tsc
+# Build the application
+RUN npm run build
 
-# Start server
-CMD ["node", "dist/server.js"] 
+# Start the server
+CMD ["npm", "start"] 
