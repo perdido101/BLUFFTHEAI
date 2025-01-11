@@ -1,20 +1,8 @@
 [build]
-builder = "nixpacks"
-buildCommand = "cd server && npm install --legacy-peer-deps && npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "cd server && npm start"
 healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "on_failure"
-
-[nixpacks]
-node-version = "18"
-nixPackages = ["nodejs", "npm"]
-
-[service.frontend]
-buildCommand = "cd client && npm install --legacy-peer-deps && npm run build"
-startCommand = "cd client && npx serve -s build"
-healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure" 
