@@ -5,6 +5,20 @@ const DATA_DIR = path.join(__dirname, '../../data');
 const LEARNING_FILE = path.join(DATA_DIR, 'learning.json');
 const PATTERNS_FILE = path.join(DATA_DIR, 'patterns.json');
 
+interface ModelHistory {
+  decisions: any[];
+  performance: any;
+}
+
+interface PerformanceMetrics {
+  gameHistory: any[];
+  aggregateMetrics: any;
+}
+
+interface Patterns {
+  [key: string]: any;
+}
+
 export class PersistenceService {
   private data: Map<string, any>;
 
@@ -33,27 +47,27 @@ export class PersistenceService {
     return await this.load('qTable') || {};
   }
 
-  async saveModelHistory(history: any) {
+  async saveModelHistory(history: ModelHistory) {
     await this.save('modelHistory', history);
   }
 
-  async loadModelHistory() {
+  async loadModelHistory(): Promise<ModelHistory | null> {
     return await this.load('modelHistory') || { decisions: [], performance: {} };
   }
 
-  async loadPatterns() {
+  async loadPatterns(): Promise<Patterns> {
     return await this.load('patterns') || [];
   }
 
-  async savePatterns(patterns: any) {
+  async savePatterns(patterns: Patterns) {
     await this.save('patterns', patterns);
   }
 
-  async loadPerformanceMetrics() {
+  async loadPerformanceMetrics(): Promise<PerformanceMetrics | null> {
     return await this.load('performanceMetrics') || {};
   }
 
-  async savePerformanceMetrics(metrics: any) {
+  async savePerformanceMetrics(metrics: PerformanceMetrics) {
     await this.save('performanceMetrics', metrics);
   }
 } 

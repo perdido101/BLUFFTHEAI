@@ -63,7 +63,7 @@ export class ReinforcementLearningService {
     return {
       aiCards: gameState.aiHand.length,
       playerCards: gameState.playerHand.length,
-      centerPile: gameState.lastPlay ? gameState.lastPlay.actualCards.length : 0,
+      centerPile: gameState.centerPile.length,
       lastPlayValue: gameState.lastPlay?.declaredCards,
       lastPlayCount: gameState.lastPlay?.actualCards.length
     };
@@ -118,13 +118,14 @@ export class ReinforcementLearningService {
       actions.push({ type: 'CHALLENGE' });
     }
 
-    if (gameState.aiHand.length > 0) {
+    const aiHandSize = gameState.aiHand.length;
+    if (aiHandSize > 0) {
       // Add possible card plays
       const cardCounts = [1, 2, 3, 4];
       const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
       
       for (const count of cardCounts) {
-        if (count <= gameState.aiHand.length) {
+        if (count <= aiHandSize) {
           for (const value of values) {
             if (!gameState.lastPlay || this.isHigherValue(value, gameState.lastPlay.declaredCards)) {
               actions.push({

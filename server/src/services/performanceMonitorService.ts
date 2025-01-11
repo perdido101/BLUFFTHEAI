@@ -17,11 +17,11 @@ export class PerformanceMonitorService {
     };
   }
 
-  startGame() {
+  startGame(): void {
     this.metrics.startTime = Date.now();
   }
 
-  endGame() {
+  endGame(): void {
     this.metrics.endTime = Date.now();
   }
 
