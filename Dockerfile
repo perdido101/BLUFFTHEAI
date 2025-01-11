@@ -32,7 +32,7 @@ RUN set -eux; \
         g++ \
     && \
     # Update npm and install global tools
-    npm install -g npm@10.2.4 rimraf typescript && \
+    npm install -g npm@10.2.4 rimraf@5.0.5 typescript && \
     npm --version && \
     # Install production dependencies with proper error handling
     npm install --omit=dev --prefer-offline && \
@@ -77,7 +77,7 @@ RUN set -eux; \
         g++ \
     && \
     # Update npm and install global tools
-    npm install -g npm@10.2.4 rimraf typescript && \
+    npm install -g npm@10.2.4 rimraf@5.0.5 typescript && \
     npm --version && \
     # Install all dependencies with proper error handling
     npm install --prefer-offline && \
@@ -119,7 +119,7 @@ RUN set -eux; \
         git \
     && \
     # Update npm and install global tools
-    npm install -g npm@10.2.4 rimraf typescript && \
+    npm install -g npm@10.2.4 rimraf@5.0.5 typescript && \
     npm --version && \
     # Setup Python symlink
     if [ ! -f /usr/bin/python ]; then \
