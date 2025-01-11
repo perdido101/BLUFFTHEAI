@@ -51,7 +51,7 @@
     "node": ">=18.0.0"
   },
   "overrides": {
-    "inflight": "^2.0.0"
+    "inflight": "1.0.6"
   },
   "jest": {
     "preset": "ts-jest",
