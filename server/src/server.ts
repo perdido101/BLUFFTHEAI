@@ -16,6 +16,8 @@ import { ReinforcementLearningService } from './services/reinforcementLearningSe
 import { AdaptiveDifficultyService } from './services/adaptiveDifficultyService';
 import { setupSecurity } from './middleware/security';
 import * as os from 'os';
+import v8 from 'v8';
+import { MemoryMonitoringService } from './services/memoryMonitoringService';
 
 dotenv.config();
 
@@ -93,6 +95,25 @@ const anthropic = new Anthropic({
 let mlIntegration: MLIntegrationService;
 let performanceMetrics: PerformanceMetricsService;
 let currentGameId: string | null = null;
+
+// Configure memory monitoring
+const memoryMonitor = MemoryMonitoringService.getInstance();
+memoryMonitor.startMonitoring(30000); // Check every 30 seconds
+
+// Add memory management middleware
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (global.gc) {
+      global.gc();
+    }
+    
+    const heapStats = v8.getHeapStatistics();
+    if (heapStats.used_heap_size > heapStats.heap_size_limit * 0.7) {
+      memoryMonitor.forceGarbageCollection();
+    }
+  });
+  next();
+});
 
 async function initializeServer() {
   // Initialize services

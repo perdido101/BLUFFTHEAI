@@ -1,21 +1,25 @@
 # Version control
-.git
+.git/
 .gitignore
 .gitattributes
+.github/
+.gitlab/
 
 # Dependencies
 node_modules/
 **/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+.pnp/
+.pnp.js
 .npm/
 .yarn/
+.yarn-integrity
 
 # Environment and configs
-.env
-.env.*
+.env*
+.env.local
+.env.development
+.env.test
+.env.production
 *.config.js
 *.config.ts
 tsconfig*.json
@@ -24,35 +28,66 @@ tsconfig*.json
 .eslintrc*
 .prettierrc*
 .editorconfig
-
-# Development
-*.md
-*.log
 .vscode/
 .idea/
-.DS_Store
+
+# Build outputs
+dist/
+build/
 coverage/
-.nyc_output/
-docs/
-examples/
-scripts/
+*.tsbuildinfo
+.next/
+out/
+.nuxt/
+.docz/
+.cache/
+public/
+
+# Logs and debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+debug/
+.DS_Store
+*.pem
 
 # Testing
+coverage/
+.nyc_output/
 __tests__/
 **/__tests__/
 test/
 tests/
-*.test.ts
-*.spec.ts
-*.test.js
-*.spec.js
+**/*.test.ts
+**/*.spec.ts
+**/*.test.js
+**/*.spec.js
 jest.config.*
 .jest/
 
-# Build output
-dist/
-build/
-*.tsbuildinfo
+# Documentation
+docs/
+*.md
+LICENSE*
+*.txt
+*.pdf
+
+# Development tools
+.husky/
+.github/
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+.dockerignore
+Dockerfile*
+docker-compose*
+*.sh
+*.bash
+*.cmd
+*.ps1
 
 # Temporary files
 *.swp
@@ -60,19 +95,35 @@ build/
 *~
 .temp/
 .tmp/
-.cache/
+tmp/
 
-# Docker
-Dockerfile*
-docker-compose*
-.docker/
+# Client-side assets (if separate from server)
+client/
+public/
+assets/
+static/
+images/
+media/
 
-# Misc
-.editorconfig
-README.md
-CHANGELOG.md
-LICENSE
-*.txt
-*.pdf
-.husky/
-.github/ 
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+.project
+.classpath
+.settings/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
