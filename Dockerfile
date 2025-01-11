@@ -25,11 +25,11 @@ RUN set -eux; \
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
     apk update && \
-    # Install build tools with version pinning
+    # Install build tools
     apk add --no-cache --virtual .build-deps \
         python3~=3.11 \
         make~=4.4 \
-        g++~=12.2 \
+        g++~=13.2 \
     && \
     # Update npm and verify installation
     npm install -g npm@latest && \
@@ -73,11 +73,11 @@ RUN set -eux; \
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
     apk update && \
-    # Install build tools with version pinning
+    # Install build tools
     apk add --no-cache --virtual .build-deps \
         python3~=3.11 \
         make~=4.4 \
-        g++~=12.2 \
+        g++~=13.2 \
     && \
     # Update npm and verify installation
     npm install -g npm@latest && \
