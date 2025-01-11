@@ -22,7 +22,6 @@ node_modules/
 .env.production
 *.config.js
 *.config.ts
-tsconfig*.json
 .npmrc
 .yarnrc
 .eslintrc*
