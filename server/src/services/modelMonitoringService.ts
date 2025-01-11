@@ -35,7 +35,15 @@ interface ModelPerformance {
   totalMoves: number;
 }
 
+interface ModelUpdate {
+  timestamp: number;
+  gameState: GameState;
+  result: 'win' | 'loss';
+  success: boolean;
+}
+
 export class ModelMonitoringService {
+  private readonly MAX_HISTORY_LENGTH = 1000;
   private decisionHistory: DecisionMetrics[] = [];
   private performance: ModelPerformance = {
     accuracy: 0,
@@ -179,5 +187,54 @@ export class ModelMonitoringService {
     });
 
     return distribution;
+  }
+
+  async recordModelUpdate(update: ModelUpdate): Promise<void> {
+    try {
+      const currentMetrics = await this.getMetrics();
+      
+      // Record the update
+      currentMetrics.modelUpdates = currentMetrics.modelUpdates || [];
+      currentMetrics.modelUpdates.push({
+        timestamp: update.timestamp,
+        result: update.result,
+        success: update.success
+      });
+
+      // Keep only recent updates
+      if (currentMetrics.modelUpdates.length > this.MAX_HISTORY_LENGTH) {
+        currentMetrics.modelUpdates = currentMetrics.modelUpdates.slice(-this.MAX_HISTORY_LENGTH);
+      }
+
+      // Update success rate
+      const recentUpdates = currentMetrics.modelUpdates.slice(-100);
+      currentMetrics.modelUpdateSuccessRate = 
+        recentUpdates.filter(u => u.success).length / recentUpdates.length;
+
+      await this.persistenceService.saveMetrics(currentMetrics);
+    } catch (error) {
+      console.error('Error recording model update:', error);
+      throw error;
+    }
+  }
+
+  async getMetrics(): Promise<{
+    modelUpdates: Array<{
+      timestamp: number;
+      result: 'win' | 'loss';
+      success: boolean;
+    }>;
+    modelUpdateSuccessRate: number;
+  }> {
+    try {
+      const metrics = await this.persistenceService.loadMetrics();
+      return metrics || {
+        modelUpdates: [],
+        modelUpdateSuccessRate: 0
+      };
+    } catch (error) {
+      console.error('Error getting metrics:', error);
+      throw error;
+    }
   }
 } 

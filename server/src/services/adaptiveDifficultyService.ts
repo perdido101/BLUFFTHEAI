@@ -199,4 +199,32 @@ export class AdaptiveDifficultyService {
   getCurrentDifficulty(): DifficultySettings {
     return { ...this.difficultySettings };
   }
+
+  async adjustDifficulty(gameState: GameState, result: 'win' | 'loss'): Promise<void> {
+    try {
+      // Update metrics first
+      await this.updateMetrics({
+        winner: result === 'win' ? 'player' : 'ai',
+        playerMoves: [], // Would need to track these throughout the game
+        aiMoves: [],    // Would need to track these throughout the game
+        finalState: gameState
+      });
+
+      // Additional difficulty adjustments based on the specific game state
+      const endgamePhase = (gameState.aiHand.length + gameState.playerHand.length) < 10;
+      const criticalPosition = gameState.aiHand.length <= 2;
+
+      if (result === 'loss' && (endgamePhase || criticalPosition)) {
+        // Make the game slightly easier if AI lost in critical situations
+        this.difficultySettings.aggressiveness = Math.max(0.3, this.difficultySettings.aggressiveness - 0.1);
+        this.difficultySettings.bluffFrequency = Math.max(0.3, this.difficultySettings.bluffFrequency - 0.1);
+        this.difficultySettings.riskTolerance = Math.max(0.3, this.difficultySettings.riskTolerance - 0.1);
+      }
+
+      await this.persistenceService.saveDifficultySettings(this.difficultySettings);
+    } catch (error) {
+      console.error('Error adjusting difficulty:', error);
+      throw error;
+    }
+  }
 } 

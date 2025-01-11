@@ -291,11 +291,11 @@ export class MLIntegrationService {
           averageMovesPerGame: playerStats.averageMovesPerGame
         },
         optimalStrategy: {
-          recommendedAction: optimalStrategy.recommendedBluffing || optimalStrategy.recommendedChallenging || 'PASS',
-          confidence: 0.7, // Default confidence when no specific recommendation
+          recommendedAction: 'PASS',
+          confidence: 0.7,
           alternativeActions: [
-            { action: 'PASS', confidence: 0.3 },
-            { action: 'CHALLENGE', confidence: 0.4 }
+            { action: 'CHALLENGE', confidence: 0.4 },
+            { action: 'PLAY_CARDS', confidence: 0.3 }
           ]
         },
         personalityTraits: {
@@ -310,7 +310,10 @@ export class MLIntegrationService {
 
       return insights;
     } catch (error) {
-      throw this.errorHandler.handleMLError(error, gameState);
+      throw this.errorHandler.handleMLError(
+        error instanceof Error ? error : new Error(String(error)),
+        gameState
+      );
     }
   }
 
@@ -337,7 +340,7 @@ export class MLIntegrationService {
   async updateModel(gameState: GameState, result: 'win' | 'loss'): Promise<void> {
     try {
       await Promise.all([
-        this.adaptiveLearning.learn(gameState, result),
+        this.adaptiveLearning.learn(gameState, result === 'win', gameState),
         this.patternRecognition.updatePatterns(gameState, result),
         this.aiStrategy.updateStrategy(gameState, result)
       ]);
@@ -354,7 +357,10 @@ export class MLIntegrationService {
       });
     } catch (error) {
       console.error('Error updating model:', error);
-      throw this.errorHandler.handleMLError(error, gameState);
+      throw this.errorHandler.handleMLError(
+        error instanceof Error ? error : new Error(String(error)),
+        gameState
+      );
     }
   }
 } 

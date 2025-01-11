@@ -20,6 +20,8 @@ interface PlayerPattern {
 }
 
 export class PatternRecognitionService {
+  private readonly MAX_PATTERN_HISTORY = 100;
+  private readonly HISTORY_LIMIT = 20;
   private patterns: PlayerPattern = {
     moveHistory: [],
     bluffingTriggers: {
@@ -34,7 +36,6 @@ export class PatternRecognitionService {
     }
   };
 
-  private readonly HISTORY_LIMIT = 20;
   private persistenceService: PersistenceService;
 
   constructor(persistenceService: PersistenceService) {
@@ -118,6 +119,44 @@ export class PatternRecognitionService {
     return {
       likelyToBluff: totalBluffs / (moveCount || 1),
       likelyToChallenge: totalChallenges / (moveCount || 1)
+    };
+  }
+
+  async updatePatterns(gameState: GameState, result: 'win' | 'loss'): Promise<void> {
+    try {
+      const patterns = await this.getPatterns();
+      const moveHistory = gameState.lastPlay ? [gameState.lastPlay] : [];
+      
+      // Update pattern weights based on game result
+      if (result === 'win') {
+        patterns.successfulPatterns.push(...moveHistory);
+      } else {
+        patterns.failedPatterns.push(...moveHistory);
+      }
+
+      // Trim old patterns if needed
+      if (patterns.successfulPatterns.length > this.MAX_PATTERN_HISTORY) {
+        patterns.successfulPatterns = patterns.successfulPatterns.slice(-this.MAX_PATTERN_HISTORY);
+      }
+      if (patterns.failedPatterns.length > this.MAX_PATTERN_HISTORY) {
+        patterns.failedPatterns = patterns.failedPatterns.slice(-this.MAX_PATTERN_HISTORY);
+      }
+
+      await this.persistenceService.savePatterns(patterns);
+    } catch (error) {
+      console.error('Error updating patterns:', error);
+      throw error;
+    }
+  }
+
+  private async getPatterns(): Promise<{
+    successfulPatterns: GameAction[];
+    failedPatterns: GameAction[];
+  }> {
+    const patterns = await this.persistenceService.loadPatterns();
+    return patterns || {
+      successfulPatterns: [],
+      failedPatterns: []
     };
   }
 } 

@@ -33,4 +33,39 @@ export interface GameHistory {
   finalState: GameState;
 }
 
-export { Card } from './Card'; 
+export interface DecisionMetrics {
+  timestamp: number;
+  gameState: {
+    aiCards: number;
+    playerCards: number;
+    centerPile: number;
+    currentTurn: 'player' | 'ai';
+  };
+  mlInsights: {
+    bluffProbability: number;
+    challengeProbability: number;
+    patternConfidence: number;
+    riskLevel: number;
+  };
+  decision: {
+    type: string;
+    confidence: number;
+    alternativesConsidered: string[];
+  };
+  outcome?: {
+    successful: boolean;
+    reward: number;
+  };
+}
+
+export interface ModelPerformance {
+  accuracy: number;
+  bluffSuccessRate: number;
+  challengeSuccessRate: number;
+  averageReward: number;
+  gamesPlayed: number;
+  totalMoves: number;
+}
+
+export { Card };
+export type { GameState, GameAction }; 
