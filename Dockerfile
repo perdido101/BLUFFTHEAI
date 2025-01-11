@@ -31,8 +31,8 @@ RUN set -eux; \
         make \
         g++ \
     && \
-    # Update npm and verify installation
-    npm install -g npm@latest && \
+    # Update npm to a compatible version
+    npm install -g npm@10.2.4 && \
     npm --version && \
     # Install production dependencies with proper error handling
     if [ ! -f package-lock.json ]; then \
@@ -79,8 +79,8 @@ RUN set -eux; \
         make \
         g++ \
     && \
-    # Update npm and verify installation
-    npm install -g npm@latest && \
+    # Update npm to a compatible version
+    npm install -g npm@10.2.4 && \
     npm --version && \
     # Install all dependencies with proper error handling
     if [ ! -f package-lock.json ]; then \
@@ -124,6 +124,9 @@ RUN set -eux; \
         g++ \
         git \
     && \
+    # Update npm to a compatible version
+    npm install -g npm@10.2.4 && \
+    npm --version && \
     # Setup Python symlink
     if [ ! -f /usr/bin/python ]; then \
         ln -sf /usr/bin/python3 /usr/bin/python; \
