@@ -247,4 +247,53 @@ export class ReinforcementLearningService {
       mostVisitedStates
     };
   }
+
+  private selectBestCards(
+    gameState: GameState,
+    currentValue: string | null,
+    shouldBluff: boolean,
+    riskTolerance: number,
+    opponentChallengeProb: number
+  ): { cards: Card[], declaredValue: string } | null {
+    const aiCards = gameState.aiHand;
+    if (aiCards.length === 0) return null;
+
+    // Group cards by value
+    const cardGroups = this.groupCardsByValue(aiCards);
+    
+    // If we're following a play, we need to match or beat the current value
+    if (currentValue) {
+      const validGroups = this.getValidCardGroups(cardGroups, currentValue);
+      
+      if (validGroups.length > 0) {
+        // Play real cards if we have them
+        const bestGroup = this.selectBestCardGroup(validGroups, riskTolerance);
+        return {
+          cards: bestGroup.cards,
+          declaredValue: bestGroup.value
+        };
+      } else if (shouldBluff && opponentChallengeProb < 0.7) {
+        // Bluff if conditions are favorable
+        return this.createBluff(aiCards, currentValue, riskTolerance);
+      }
+      
+      return null; // Pass if we can't play legally and shouldn't bluff
+    }
+
+    // If we're starting a new round, choose the best cards to play
+    const bestGroup = this.selectBestCardGroup(Object.values(cardGroups), riskTolerance);
+    if (shouldBluff && opponentChallengeProb < 0.5) {
+      // Sometimes bluff with a higher value
+      const bluffValue = this.selectBluffValue(bestGroup.value);
+      return {
+        cards: bestGroup.cards,
+        declaredValue: bluffValue
+      };
+    }
+
+    return {
+      cards: bestGroup.cards,
+      declaredValue: bestGroup.value
+    };
+  }
 } 

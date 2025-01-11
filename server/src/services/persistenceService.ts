@@ -37,6 +37,10 @@ export class PersistenceService {
     await this.save('modelHistory', history);
   }
 
+  async loadModelHistory() {
+    return await this.load('modelHistory') || { decisions: [], performance: {} };
+  }
+
   async loadPatterns() {
     return await this.load('patterns') || [];
   }

@@ -1,7 +1,7 @@
 export class PerformanceMonitorService {
   private metrics: {
-    startTime?: number;
-    endTime?: number;
+    startTime: number | undefined;
+    endTime: number | undefined;
     totalMoves: number;
     successfulBluffs: number;
     failedBluffs: number;
@@ -9,6 +9,8 @@ export class PerformanceMonitorService {
 
   constructor() {
     this.metrics = {
+      startTime: undefined,
+      endTime: undefined,
       totalMoves: 0,
       successfulBluffs: 0,
       failedBluffs: 0

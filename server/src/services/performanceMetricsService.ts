@@ -95,7 +95,7 @@ export class PerformanceMetricsService {
       startTime: Date.now(),
       totalMoves: 0,
       aiStats: {
-        initialCards: initialState.aiHand,
+        initialCards: initialState.aiHand.length,
         cardsPlayed: 0,
         successfulBluffs: 0,
         failedBluffs: 0,
