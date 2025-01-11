@@ -1,5 +1,5 @@
 # Production dependencies stage
-FROM node:18-alpine AS prod-deps
+FROM node:18.19-alpine3.19 AS prod-deps
 
 WORKDIR /app
 
@@ -12,33 +12,44 @@ ENV NODE_ENV=production \
     NPM_CONFIG_FUND=false \
     NPM_CONFIG_OPTIONAL=false \
     NPM_CONFIG_SAVE_EXACT=true \
-    NPM_CONFIG_IGNORE_SCRIPTS=true \
     NPM_CONFIG_ENGINE_STRICT=true \
-    NPM_CONFIG_OMIT="dev,optional"
+    NPM_CONFIG_OMIT="dev,optional" \
+    PYTHONUNBUFFERED=1
 
 # Copy only package files
 COPY package.json package-lock.json* ./
 
 # Install production dependencies only
 RUN set -eux; \
-    # Install build tools
+    # Configure Alpine mirrors and update
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+    apk update && \
+    # Install build tools with version pinning
     apk add --no-cache --virtual .build-deps \
-        python3 \
-        make \
-        g++ \
+        python3~=3.11 \
+        make~=4.4 \
+        g++~=12.2 \
     && \
-    # Update npm and handle inflight package first
+    # Update npm and verify installation
     npm install -g npm@latest && \
-    npm install inflight@1.0.6 && \
-    # Then install remaining production dependencies
-    npm ci && \
+    npm --version && \
+    # Install production dependencies with proper error handling
+    if [ ! -f package-lock.json ]; then \
+        echo "Error: package-lock.json not found" && exit 1; \
+    fi && \
+    npm ci --production --prefer-offline && \
+    # Verify critical dependencies
+    if [ ! -d node_modules ]; then \
+        echo "Error: Failed to install dependencies" && exit 1; \
+    fi && \
     # Cleanup
     apk del .build-deps && \
     rm -rf /var/cache/apk/* /root/.npm /tmp/* && \
     npm cache clean --force
 
 # Development dependencies stage
-FROM node:18-alpine AS dev-deps
+FROM node:18.19-alpine3.19 AS dev-deps
 
 WORKDIR /app
 
@@ -50,32 +61,43 @@ ENV NODE_ENV=development \
     NPM_CONFIG_AUDIT=false \
     NPM_CONFIG_FUND=false \
     NPM_CONFIG_SAVE_EXACT=true \
-    NPM_CONFIG_IGNORE_SCRIPTS=true \
-    NPM_CONFIG_ENGINE_STRICT=true
+    NPM_CONFIG_ENGINE_STRICT=true \
+    PYTHONUNBUFFERED=1
 
 # Copy only package files
 COPY package.json package-lock.json* ./
 
 # Install all dependencies including dev
 RUN set -eux; \
-    # Install build tools
+    # Configure Alpine mirrors and update
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+    apk update && \
+    # Install build tools with version pinning
     apk add --no-cache --virtual .build-deps \
-        python3 \
-        make \
-        g++ \
+        python3~=3.11 \
+        make~=4.4 \
+        g++~=12.2 \
     && \
-    # Update npm and handle inflight package first
+    # Update npm and verify installation
     npm install -g npm@latest && \
-    npm install inflight@1.0.6 && \
-    # Then install remaining dependencies
-    npm ci && \
+    npm --version && \
+    # Install all dependencies with proper error handling
+    if [ ! -f package-lock.json ]; then \
+        echo "Error: package-lock.json not found" && exit 1; \
+    fi && \
+    npm ci --prefer-offline && \
+    # Verify critical dependencies
+    if [ ! -d node_modules ]; then \
+        echo "Error: Failed to install dependencies" && exit 1; \
+    fi && \
     # Cleanup
     apk del .build-deps && \
     rm -rf /var/cache/apk/* /root/.npm /tmp/* && \
     npm cache clean --force
 
 # Builder stage
-FROM node:18-alpine AS builder
+FROM node:18.19-alpine3.19 AS builder
 
 WORKDIR /app
 
@@ -85,44 +107,81 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1 \
     NPM_CONFIG_LOGLEVEL=warn \
     TS_NODE_TRANSPILE_ONLY=true \
-    TS_NODE_PROJECT=./tsconfig.json
+    TS_NODE_PROJECT=./tsconfig.json \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false
 
-# Install build tools
+# Install build tools with version pinning
 RUN set -eux; \
+    # Configure Alpine mirrors
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+    apk update && \
+    # Install build dependencies
     apk add --no-cache \
-        python3 \
-        make \
-        g++ \
+        python3~=3.11 \
+        make~=4.4 \
+        g++~=12.2 \
         git \
     && \
+    # Setup Python symlink
     if [ ! -f /usr/bin/python ]; then \
         ln -sf /usr/bin/python3 /usr/bin/python; \
     fi && \
+    # Verify tools
+    python3 --version && \
+    make --version && \
+    g++ --version && \
+    git --version && \
+    # Cleanup
     rm -rf /var/cache/apk/*
+
+# Copy configuration files first
+COPY package*.json tsconfig.json ./
+
+# Verify configuration files
+RUN set -eux; \
+    if [ ! -f package.json ]; then \
+        echo "Error: package.json not found" && exit 1; \
+    fi; \
+    if [ ! -f tsconfig.json ]; then \
+        echo "Error: tsconfig.json not found" && exit 1; \
+    fi
+
+# Copy source code
+COPY server/src ./server/src
 
 # Copy dependencies from dev-deps stage
 COPY --from=dev-deps /app/node_modules ./node_modules
-COPY package.json package-lock.json* ./
 
-# Copy source code
-COPY tsconfig.json ./
-COPY server/src ./server/src
-
-# Build the application
+# Verify source and build
 RUN set -eux; \
+    # Verify source exists
     if [ ! -d ./server/src ]; then \
-        echo "Error: Source directory not found"; \
+        echo "Error: Source directory not found" && exit 1; \
+    fi && \
+    # Verify TypeScript compiler
+    if [ ! -f ./node_modules/.bin/tsc ]; then \
+        echo "Error: TypeScript compiler not found" && exit 1; \
+    fi && \
+    # Run build with proper error handling
+    npm run build || { \
+        echo "Error: Build failed"; \
         exit 1; \
-    fi; \
-    if [ ! -f ./tsconfig.json ]; then \
-        echo "Error: tsconfig.json not found"; \
-        exit 1; \
-    fi; \
-    npm run build && \
+    } && \
+    # Verify build output
+    if [ ! -d ./dist ]; then \
+        echo "Error: Build output directory not found" && exit 1; \
+    fi && \
+    # Verify key files exist in dist
+    if [ ! -f ./dist/server.js ]; then \
+        echo "Error: Main server file not found in build output" && exit 1; \
+    fi && \
+    # Cleanup
     rm -rf /root/.npm /tmp/*
 
 # Runtime stage
-FROM node:18-alpine AS runtime
+FROM node:18.19-alpine3.19 AS runtime
 
 WORKDIR /app
 
@@ -133,15 +192,27 @@ ENV NODE_ENV=production \
     NPM_CONFIG_UPDATE_NOTIFIER=false \
     NPM_CONFIG_AUDIT=false
 
-# Install runtime dependencies
+# Install runtime dependencies with better error handling
 RUN set -eux; \
+    # Configure Alpine mirrors and update
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+    # Update package list
     apk update && \
+    # Upgrade existing packages
     apk upgrade && \
+    # Install required packages
     apk add --no-cache \
         busybox-extras \
         curl \
         tini \
-    && rm -rf /var/cache/apk/* /root/.npm /tmp/*
+        ca-certificates \
+    && \
+    # Verify critical packages
+    which curl && \
+    which tini && \
+    # Cleanup
+    rm -rf /var/cache/apk/* /root/.npm /tmp/*
 
 # Copy production dependencies and built files
 COPY --from=prod-deps /app/node_modules ./node_modules
