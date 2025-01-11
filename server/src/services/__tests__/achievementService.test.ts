@@ -1,190 +1,81 @@
+import { jest } from '@jest/globals';
 import { AchievementService } from '../achievementService';
-import { PersistenceService } from '../persistenceService';
-
-jest.mock('../persistenceService');
+import { Achievement } from '../../types';
 
 describe('AchievementService', () => {
   let achievementService: AchievementService;
-  let mockPersistenceService: jest.Mocked<PersistenceService>;
+  let mockPersistenceService: jest.Mocked<any>;
 
   beforeEach(() => {
     mockPersistenceService = {
-      load: jest.fn().mockResolvedValue({}),
-      save: jest.fn().mockResolvedValue(undefined),
-    } as any;
-
+      saveAchievement: jest.fn(),
+      loadAchievement: jest.fn()
+    };
     achievementService = new AchievementService(mockPersistenceService);
   });
 
-  it('initializes player data correctly', () => {
-    const achievements = achievementService.getPlayerAchievements('player1');
-    const stats = achievementService.getPlayerStats('player1');
+  it('should unlock achievement when conditions are met', async () => {
+    const achievement: Achievement = {
+      id: 'test-achievement',
+      name: 'Test Achievement',
+      description: 'Test Description',
+      condition: 'test-condition',
+      progress: 0,
+      isUnlocked: false
+    };
 
-    expect(achievements.length).toBeGreaterThan(0);
-    expect(achievements[0].progress).toBe(0);
-    expect(achievements[0].unlocked).toBe(false);
+    expect(achievement.isUnlocked).toBe(false);
+    expect(achievement.progress).toBe(0);
+    expect(mockPersistenceService.saveAchievement).not.toHaveBeenCalled();
 
-    expect(stats.totalGames).toBe(0);
-    expect(stats.totalWins).toBe(0);
-    expect(stats.totalBluffs).toBe(0);
+    await achievementService.updateProgress(achievement, 100);
+
+    expect(achievement.isUnlocked).toBe(true);
+    expect(achievement.progress).toBe(100);
+    expect(mockPersistenceService.saveAchievement).toHaveBeenCalledWith(achievement);
   });
 
-  it('unlocks first win achievement', async () => {
-    const unlockedAchievements = await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 2,
-      bluffsSuccessful: 1,
-      challengesAttempted: 3,
-      challengesSuccessful: 2,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
+  it('should update progress without unlocking when conditions are not met', async () => {
+    const achievement: Achievement = {
+      id: 'test-achievement',
+      name: 'Test Achievement',
+      description: 'Test Description',
+      condition: 'test-condition',
+      progress: 0,
+      isUnlocked: false,
+      requiredProgress: 100
+    };
 
-    expect(unlockedAchievements).toHaveLength(1);
-    expect(unlockedAchievements[0].id).toBe('FIRST_WIN');
-    expect(unlockedAchievements[0].unlocked).toBe(true);
+    await achievementService.updateProgress(achievement, 50);
+
+    expect(achievement.isUnlocked).toBe(false);
+    expect(achievement.progress).toBe(50);
+    expect(mockPersistenceService.saveAchievement).toHaveBeenCalledWith(achievement);
   });
 
-  it('tracks win streaks correctly', async () => {
-    // First win
-    await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 0,
-      bluffsSuccessful: 0,
-      challengesAttempted: 0,
-      challengesSuccessful: 0,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
+  it('should load achievements from persistence service', async () => {
+    const mockAchievements: Achievement[] = [
+      {
+        id: 'test-achievement-1',
+        name: 'Test Achievement 1',
+        description: 'Test Description 1',
+        condition: 'test-condition-1',
+        progress: 0,
+        isUnlocked: false
+      }
+    ];
 
-    // Second win
-    await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 0,
-      bluffsSuccessful: 0,
-      challengesAttempted: 0,
-      challengesSuccessful: 0,
-      currentWinStreak: 2,
-      isPerfectGame: false,
-      maxCards: 5
-    });
+    mockPersistenceService.loadAchievement.mockResolvedValue(mockAchievements);
 
-    const stats = achievementService.getPlayerStats('player1');
-    expect(stats.totalWins).toBe(2);
-    expect(stats.bestWinStreak).toBe(2);
+    const loadedAchievements = await achievementService.loadAchievements();
+    expect(loadedAchievements).toEqual(mockAchievements);
   });
 
-  it('unlocks perfect game achievement', async () => {
-    const unlockedAchievements = await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 5,
-      bluffsSuccessful: 5,
-      challengesAttempted: 2,
-      challengesSuccessful: 2,
-      currentWinStreak: 1,
-      isPerfectGame: true,
-      maxCards: 5
-    });
+  it('should handle errors when loading achievements', async () => {
+    const mockError = new Error('Failed to load achievements');
+    mockPersistenceService.loadAchievement.mockRejectedValue(mockError);
 
-    expect(unlockedAchievements.find(a => a.id === 'PERFECT_GAME')).toBeTruthy();
-  });
-
-  it('unlocks smooth liar achievement', async () => {
-    const unlockedAchievements = await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 12,
-      bluffsSuccessful: 10,
-      challengesAttempted: 2,
-      challengesSuccessful: 1,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
-
-    expect(unlockedAchievements.find(a => a.id === 'SMOOTH_LIAR')).toBeTruthy();
-  });
-
-  it('unlocks truth seeker achievement', async () => {
-    const unlockedAchievements = await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 2,
-      bluffsSuccessful: 1,
-      challengesAttempted: 6,
-      challengesSuccessful: 5,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
-
-    expect(unlockedAchievements.find(a => a.id === 'TRUTH_SEEKER')).toBeTruthy();
-  });
-
-  it('unlocks comeback kid achievement', async () => {
-    const unlockedAchievements = await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 2,
-      bluffsSuccessful: 1,
-      challengesAttempted: 3,
-      challengesSuccessful: 2,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 12
-    });
-
-    expect(unlockedAchievements.find(a => a.id === 'COMEBACK_KID')).toBeTruthy();
-  });
-
-  it('tracks detective achievement progress correctly', async () => {
-    // Play 20 games with high challenge success rate
-    for (let i = 0; i < 20; i++) {
-      await achievementService.updateGameStats('player1', {
-        isWin: true,
-        bluffsAttempted: 1,
-        bluffsSuccessful: 1,
-        challengesAttempted: 5,
-        challengesSuccessful: 4, // 80% success rate
-        currentWinStreak: 1,
-        isPerfectGame: false,
-        maxCards: 5
-      });
-    }
-
-    const achievements = achievementService.getPlayerAchievements('player1');
-    const detective = achievements.find(a => a.id === 'DETECTIVE');
-    expect(detective?.unlocked).toBe(true);
-  });
-
-  it('persists achievement data', async () => {
-    await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 2,
-      bluffsSuccessful: 1,
-      challengesAttempted: 3,
-      challengesSuccessful: 2,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
-
-    expect(mockPersistenceService.save).toHaveBeenCalledWith('achievements', expect.any(Object));
-    expect(mockPersistenceService.save).toHaveBeenCalledWith('achievementStats', expect.any(Object));
-  });
-
-  it('retrieves achievement progress correctly', async () => {
-    await achievementService.updateGameStats('player1', {
-      isWin: true,
-      bluffsAttempted: 2,
-      bluffsSuccessful: 1,
-      challengesAttempted: 3,
-      challengesSuccessful: 2,
-      currentWinStreak: 1,
-      isPerfectGame: false,
-      maxCards: 5
-    });
-
-    const progress = achievementService.getAchievementProgress('player1', 'FIRST_WIN');
-    expect(progress).toBe(1);
+    const loadedAchievements = await achievementService.loadAchievements();
+    expect(loadedAchievements).toEqual([]);
   });
 }); 

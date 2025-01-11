@@ -1,3 +1,5 @@
+import { Express, Request, Response } from 'express';
+
 export interface APIEndpoint {
   path: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -61,7 +63,9 @@ export const apiDocs: Record<string, APIEndpoint> = {
   }
 };
 
-// Add documentation endpoint to server
-app.get('/api/docs', (req, res) => {
-  res.json(apiDocs);
-}); 
+// Export a function to add documentation endpoint
+export function setupApiDocs(app: Express): void {
+  app.get('/api/docs', (req: Request, res: Response) => {
+    res.json(apiDocs);
+  });
+} 
