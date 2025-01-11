@@ -97,7 +97,7 @@ export class AdaptiveDifficultyService {
 
     // Update challenge success rate
     const challengeMoves = gameResult.playerMoves.filter(move => move.type === 'CHALLENGE');
-    const successfulChallenges = challengeMoves.filter(move => move.wasSuccessful);
+    const successfulChallenges = challengeMoves.filter(move => move.type === 'CHALLENGE' && move.result === 'success');
     this.playerMetrics.challengeSuccessRate = challengeMoves.length > 0 ?
       successfulChallenges.length / challengeMoves.length :
       this.playerMetrics.challengeSuccessRate;
@@ -154,9 +154,9 @@ export class AdaptiveDifficultyService {
     challengeThresholdMultiplier: number;
     riskToleranceMultiplier: number;
   } {
-    const endgamePhase = (gameState.aiHand + gameState.playerHand.length) < 10;
-    const winningPosition = gameState.aiHand < gameState.playerHand.length;
-    const criticalPosition = gameState.aiHand <= 2;
+    const endgamePhase = (gameState.aiHand.length + gameState.playerHand.length) < 10;
+    const winningPosition = gameState.aiHand.length < gameState.playerHand.length;
+    const criticalPosition = gameState.aiHand.length <= 2;
 
     let bluffProbabilityMultiplier = this.difficultySettings.bluffFrequency;
     let challengeThresholdMultiplier = this.difficultySettings.challengeThreshold;

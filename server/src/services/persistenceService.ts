@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { GameHistory } from '../types';
+import { GameHistory, GameState, GameAction } from '../types';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const LEARNING_FILE = path.join(DATA_DIR, 'learning.json');
@@ -18,6 +18,19 @@ interface PerformanceMetrics {
 
 interface Patterns {
   [key: string]: any;
+}
+
+interface GameHistory {
+  id: string;
+  timestamp: number;
+  moves: Array<{
+    player: 'ai' | 'player';
+    action: GameAction;
+    timestamp: number;
+  }>;
+  winner: 'ai' | 'player' | null;
+  duration: number;
+  finalState: GameState;
 }
 
 export interface PersistenceService {

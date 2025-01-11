@@ -20,10 +20,9 @@ export class AIDecisionService {
     }
 
     // AI's turn to play cards
-    const aiHand = gameState.aiHand; // We need to implement actual AI hand tracking
-    if (aiHand > 0) {
+    if (gameState.aiHand.length > 0) {
       // Select cards and decide whether to bluff
-      const cardsToPlay = []; // Implement card selection logic
+      const cardsToPlay: Card[] = []; // Initialize empty array with explicit type
       const declaredValue = 'A'; // Implement value selection logic
       
       return {

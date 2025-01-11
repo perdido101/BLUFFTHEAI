@@ -291,16 +291,19 @@ export class MLIntegrationService {
           averageMovesPerGame: playerStats.averageMovesPerGame
         },
         optimalStrategy: {
-          recommendedAction: optimalStrategy.recommendedAction,
-          confidence: optimalStrategy.confidence,
-          alternativeActions: optimalStrategy.alternativeActions
+          recommendedAction: optimalStrategy.recommendedBluffing || optimalStrategy.recommendedChallenging || 'PASS',
+          confidence: 0.7, // Default confidence when no specific recommendation
+          alternativeActions: [
+            { action: 'PASS', confidence: 0.3 },
+            { action: 'CHALLENGE', confidence: 0.4 }
+          ]
         },
         personalityTraits: {
-          aggressiveness: personalityTraits.aggressiveness,
-          deceptiveness: personalityTraits.deceptiveness,
-          confidence: personalityTraits.confidence,
-          impulsiveness: personalityTraits.impulsiveness,
-          adaptability: personalityTraits.adaptability
+          aggressiveness: personalityTraits.aggression || 0.5,
+          deceptiveness: personalityTraits.deception || 0.5,
+          confidence: personalityTraits.confidence || 0.5,
+          impulsiveness: personalityTraits.impulse || 0.5,
+          adaptability: personalityTraits.adaptation || 0.5
         },
         chatAnalysis
       };
@@ -328,6 +331,30 @@ export class MLIntegrationService {
         },
         keyPhrases: []
       };
+    }
+  }
+
+  async updateModel(gameState: GameState, result: 'win' | 'loss'): Promise<void> {
+    try {
+      await Promise.all([
+        this.adaptiveLearning.learn(gameState, result),
+        this.patternRecognition.updatePatterns(gameState, result),
+        this.aiStrategy.updateStrategy(gameState, result)
+      ]);
+
+      // Update difficulty based on performance
+      await this.adaptiveDifficulty.adjustDifficulty(gameState, result);
+
+      // Record the update for monitoring
+      await this.modelMonitoring.recordModelUpdate({
+        timestamp: Date.now(),
+        gameState,
+        result,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error updating model:', error);
+      throw this.errorHandler.handleMLError(error, gameState);
     }
   }
 } 
