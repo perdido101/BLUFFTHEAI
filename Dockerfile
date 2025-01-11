@@ -2,16 +2,16 @@ FROM node:18
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (without running postinstall script yet)
+RUN npm install --ignore-scripts
 
-# Copy source code
+# Copy source code and TypeScript config
 COPY . .
 
-# Build the application
+# Now run TypeScript compilation
 RUN npm run build
 
 # Start the server

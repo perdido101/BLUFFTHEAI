@@ -4,10 +4,10 @@
   "main": "dist/server/src/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "tsc",
+    "build": "tsc --project tsconfig.json",
     "dev": "nodemon server/src/server.ts",
     "test": "jest",
-    "postinstall": "tsc",
+    "postinstall": "npm run build",
     "deploy": "npm run build && npm start"
   },
   "keywords": ["card-game", "bluff", "ai", "server"],
