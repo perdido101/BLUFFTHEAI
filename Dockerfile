@@ -6,34 +6,25 @@ WORKDIR /app
 RUN npm install -g typescript
 
 # Copy package files
-COPY server/package*.json ./server/
-COPY client/package*.json ./client/
+COPY server/package*.json ./
+COPY server/tsconfig.json ./
 
 # Install dependencies
-WORKDIR /app/server
 RUN npm install --legacy-peer-deps
 RUN npm install typescript @types/node --save-dev
 
-WORKDIR /app/client
-RUN npm install --legacy-peer-deps
-
 # Copy source code
-COPY . .
+COPY server/src ./src
 
-# Build server (with debugging)
-WORKDIR /app/server
+# Show debugging info
+RUN echo "Directory contents:"
 RUN ls -la
-RUN echo "Contents of src directory:"
-RUN ls -la src || echo "src directory not found"
-RUN echo "Running tsc directly:"
-RUN npx tsc --version
-RUN npx tsc --project tsconfig.json --listFiles
-RUN npx tsc --project tsconfig.json
+RUN echo "Source directory contents:"
+RUN ls -la src
 
-# Build client
-WORKDIR /app/client
-RUN npm run build
+# Build server
+RUN npx tsc --version
+RUN npx tsc
 
 # Start server
-WORKDIR /app/server
 CMD ["npm", "start"] 
