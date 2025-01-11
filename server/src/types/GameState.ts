@@ -1,4 +1,6 @@
-interface GameState {
+import { Card } from './Card';
+
+export interface GameState {
   aiHand: Card[];
   playerHand: Card[];
   centerPile: Card[];
@@ -8,4 +10,5 @@ interface GameState {
     declaredCards: string;
     actualCards: Card[];
   };
+  aiCards?: Card[];  // For backward compatibility
 } 

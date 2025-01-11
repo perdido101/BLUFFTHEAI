@@ -15,7 +15,7 @@ class TwitterService {
 
   private generateGameTweet(gameState: GameState): string {
     const playerCards = gameState.playerHand.length;
-    const aiCards = gameState.aiHand;
+    const aiCards = gameState.aiHand.length;
     
     return `🎮 Bluff AI Game Update!\n
 🃏 Player Cards: ${playerCards}

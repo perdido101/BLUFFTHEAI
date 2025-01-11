@@ -40,12 +40,12 @@ export class CacheService {
     }
   }
 
-  private createCacheKey(obj: any): string {
+  private createCacheKey(obj: DecisionCacheKey | ModelPredictionCacheKey): string {
     return JSON.stringify(obj);
   }
 
   private getGamePhase(gameState: GameState): 'early' | 'mid' | 'late' {
-    const totalCards = gameState.playerHand.length + gameState.aiHand;
+    const totalCards = gameState.aiHand.length + gameState.playerHand.length;
     if (totalCards > 40) return 'early';
     if (totalCards > 20) return 'mid';
     return 'late';
@@ -64,6 +64,10 @@ export class CacheService {
   }
 
   async set<T>(key: string, value: T, ttl: number = CacheService.DEFAULT_TTL): Promise<void> {
+    if (!key) {
+      throw new Error('Key cannot be undefined or empty');
+    }
+    
     // Ensure we don't exceed max entries
     if (this.cache.size >= this.maxEntries) {
       // Remove oldest entry
@@ -80,7 +84,7 @@ export class CacheService {
 
   async cacheDecision(gameState: GameState, decision: GameAction): Promise<void> {
     const cacheKey = this.createCacheKey({
-      aiCards: JSON.stringify(gameState.aiCards),
+      aiCards: JSON.stringify(gameState.aiHand),
       playerCards: JSON.stringify(gameState.playerHand),
       lastPlay: gameState.lastPlay ? JSON.stringify(gameState.lastPlay) : undefined,
       gamePhase: this.getGamePhase(gameState)
@@ -91,7 +95,7 @@ export class CacheService {
 
   async getCachedDecision(gameState: GameState): Promise<GameAction | null> {
     const cacheKey = this.createCacheKey({
-      aiCards: JSON.stringify(gameState.aiCards),
+      aiCards: JSON.stringify(gameState.aiHand),
       playerCards: JSON.stringify(gameState.playerHand),
       lastPlay: gameState.lastPlay ? JSON.stringify(gameState.lastPlay) : undefined,
       gamePhase: this.getGamePhase(gameState)
@@ -133,7 +137,7 @@ export class CacheService {
 
   async invalidateDecisionCache(gameState: GameState): Promise<void> {
     const cacheKey = this.createCacheKey({
-      aiCards: JSON.stringify(gameState.aiCards),
+      aiCards: JSON.stringify(gameState.aiHand),
       playerCards: JSON.stringify(gameState.playerHand),
       lastPlay: gameState.lastPlay ? JSON.stringify(gameState.lastPlay) : undefined,
       gamePhase: this.getGamePhase(gameState)

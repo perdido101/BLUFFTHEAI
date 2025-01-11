@@ -33,6 +33,14 @@ interface ChatAnalysisResult {
   keyPhrases: string[];
 }
 
+interface PlayerTraits {
+  aggressiveness: number;
+  deceptiveness: number;
+  confidence: number;
+  impulsiveness: number;
+  [key: string]: number;
+}
+
 export class ChatAnalysisService {
   private readonly EMOTION_PATTERNS = {
     confident: /(?:i (?:know|am sure|bet|definitely)|trust me|obviously|clearly|without doubt)/i,

@@ -1,18 +1,26 @@
 import { GameState, GameAction } from '../types';
 import { PersistenceService } from './persistenceService';
 
+interface BluffTriggers {
+  lowCards: number;
+  highCards: number;
+  underPressure: number;
+}
+
+interface ChallengePatterns {
+  afterConsecutivePlays: number;
+  whenLowCardsPlayed: number;
+  whenHighCardsPlayed: number;
+}
+
 interface PlayerPattern {
   moveHistory: GameAction[];
-  bluffingTriggers: {
-    lowCards: number;
-    highCards: number;
-    underPressure: number;
-  };
-  challengePatterns: {
-    afterConsecutivePlays: number;
-    whenLowCardsPlayed: number;
-    whenHighCardsPlayed: number;
-  };
+  bluffingTriggers: BluffTriggers;
+  challengePatterns: ChallengePatterns;
+}
+
+interface Patterns extends PlayerPattern {
+  // Additional properties if any
 }
 
 export class PatternRecognitionService {

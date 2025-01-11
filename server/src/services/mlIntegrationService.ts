@@ -432,7 +432,7 @@ export class MLIntegrationService {
     riskTolerance: number,
     opponentChallengeProb: number
   ): { cards: Card[], declaredValue: string } | null {
-    const aiCards = gameState.aiCards || [];
+    const aiCards = gameState.aiHand;
     if (aiCards.length === 0) return null;
 
     // Group cards by value
@@ -572,7 +572,7 @@ export class MLIntegrationService {
     count: number,
     declaredValue: string
   ): Promise<Card[]> {
-    const aiCards = gameState.aiCards || [];
+    const aiCards = gameState.aiHand;
     if (aiCards.length === 0 || count > aiCards.length) {
       return [];
     }
