@@ -17,12 +17,7 @@ interface BluffIndicator {
 
 interface PersonalityInsight {
   confidence: number;     // 0 to 1
-  traits: {
-    aggressiveness: number;
-    deceptiveness: number;
-    confidence: number;
-    impulsiveness: number;
-  };
+  traits: PlayerTraits;
 }
 
 interface ChatAnalysisResult {
@@ -144,7 +139,7 @@ export class ChatAnalysisService {
   }
 
   private analyzePersonality(message: string): PersonalityInsight {
-    const traits = {
+    const traits: PlayerTraits = {
       aggressiveness: 0,
       deceptiveness: 0,
       confidence: 0,
@@ -168,9 +163,9 @@ export class ChatAnalysisService {
     traits.impulsiveness = (message.match(/!|\?{2,}|[A-Z]{2,}/g) || []).length * 0.2;
 
     // Normalize traits
-    Object.keys(traits).forEach(key => {
+    for (const key of Object.keys(traits)) {
       traits[key] = Math.max(0, Math.min(1, traits[key]));
-    });
+    }
 
     return {
       confidence: 0.7, // Base confidence in personality analysis

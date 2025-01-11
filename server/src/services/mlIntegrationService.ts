@@ -21,18 +21,24 @@ interface PlayerStats {
   winRate: number;
   bluffSuccessRate: number;
   challengeSuccessRate: number;
-  [key: string]: number;
+  totalGames: number;
+  averageMovesPerGame: number;
 }
 
 interface OptimalStrategy {
-  recommendedAction: GameAction;
+  recommendedAction: 'PLAY_CARDS' | 'CHALLENGE' | 'PASS';
   confidence: number;
-  alternativeActions: GameAction[];
+  alternativeActions: Array<{
+    action: 'PLAY_CARDS' | 'CHALLENGE' | 'PASS';
+    confidence: number;
+  }>;
 }
 
 interface PersonalityTraits {
-  riskTolerance: number;
   aggressiveness: number;
+  deceptiveness: number;
+  confidence: number;
+  impulsiveness: number;
   adaptability: number;
   [key: string]: number;
 }
@@ -69,6 +75,12 @@ interface DecisionMetrics {
   challengeProbability: number;
   patternConfidence: number;
   riskLevel: number;
+}
+
+interface RLSuggestion {
+  type: 'PLAY_CARDS' | 'CHALLENGE' | 'PASS';
+  cardCount?: number;
+  declaredValue?: string;
 }
 
 export class MLIntegrationService {
@@ -169,7 +181,7 @@ export class MLIntegrationService {
       }
 
       const mlInsights = await this.getMLInsights(gameState, playerChat);
-      const rlSuggestion = this.reinforcementLearning.suggestAction(gameState);
+      const rlSuggestion = this.reinforcementLearning.suggestAction(gameState) as RLSuggestion;
       let alternativesConsidered: string[] = [];
       let decision: GameAction;
 
@@ -187,18 +199,18 @@ export class MLIntegrationService {
       } else if (gameState.aiHand.length > 0) {
         alternativesConsidered = ['PASS', 'PLAY_CARDS'];
         
-        if (rlSuggestion.type === 'PLAY_CARDS' && rlSuggestion.payload) {
+        if (rlSuggestion.type === 'PLAY_CARDS' && rlSuggestion.cardCount && rlSuggestion.declaredValue) {
           const shouldBluff = Math.random() < (difficultyModifiers.bluffProbabilityMultiplier * 0.8);
           const declaredValue = shouldBluff 
-            ? this.selectBluffValue(rlSuggestion.payload.declaredValue)
-            : rlSuggestion.payload.declaredValue;
+            ? this.selectBluffValue(rlSuggestion.declaredValue)
+            : rlSuggestion.declaredValue;
 
           decision = {
             type: 'PLAY_CARDS',
             payload: {
               cards: await this.selectCardsForPlay(
                 gameState,
-                rlSuggestion.payload.cards.length,
+                rlSuggestion.cardCount,
                 declaredValue
               ),
               declaredValue
@@ -262,30 +274,17 @@ export class MLIntegrationService {
         return cachedPredictions;
       }
 
-      const [patterns, playerStats, optimalStrategy, personalityTraits] = await Promise.all([
-        this.errorRecovery.withRetry(
-          async () => this.patternRecognition.getPrediction(),
-          'prediction'
-        ),
-        this.errorRecovery.withRetry(
-          async () => this.aiStrategy.getPlayerAnalysis(),
-          'strategy'
-        ),
-        this.errorRecovery.withRetry(
-          async () => this.adaptiveLearning.getOptimalStrategy(gameState),
-          'learning'
-        ),
-        this.errorRecovery.withRetry(
-          async () => this.aiPersonality.getPersonalityTraits(),
-          'personality'
-        )
+      const [playerStats, optimalStrategy, personalityTraits] = await Promise.all([
+        this.aiStrategy.getPlayerAnalysis(gameState),
+        this.adaptiveLearning.getOptimalStrategy(gameState),
+        this.aiPersonality.getPersonalityTraits()
       ]);
 
       const insights: MLInsights = {
-        patterns,
         playerStats,
         optimalStrategy,
-        personalityTraits
+        personalityTraits,
+        difficultyModifiers: this.adaptiveDifficulty.getDifficultyModifiers(gameState)
       };
 
       if (playerChat) {

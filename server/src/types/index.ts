@@ -23,11 +23,12 @@ export interface GameAction {
 export interface GameHistory {
   id: string;
   timestamp: number;
-  moves: {
+  moves: Array<{
+    player: 'ai' | 'player';
     action: GameAction;
-    resultingState: GameState;
-    wasBluff?: boolean;
-  }[];
-  winner: 'player' | 'ai';
+    timestamp: number;
+  }>;
+  winner: 'ai' | 'player' | null;
   duration: number;
+  finalState: GameState;
 } 
