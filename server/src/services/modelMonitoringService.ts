@@ -72,7 +72,7 @@ export class ModelMonitoringService {
     const metrics: DecisionMetrics = {
       timestamp: Date.now(),
       gameState: {
-        aiCards: gameState.aiHand,
+        aiCards: gameState.aiHand.length,
         playerCards: gameState.playerHand.length,
         centerPile: gameState.centerPile.length,
         currentTurn: gameState.currentTurn

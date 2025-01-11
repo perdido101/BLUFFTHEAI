@@ -6,6 +6,7 @@ export interface Card {
 export interface GameState {
   playerHand: Card[];
   aiHand: Card[];
+  centerPile: Card[];
   currentTurn: 'player' | 'ai';
   lastPlay?: {
     player: 'player' | 'ai';

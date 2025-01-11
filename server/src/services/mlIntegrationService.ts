@@ -96,7 +96,7 @@ export class MLIntegrationService {
         decision = rlSuggestion.type === 'CHALLENGE' || shouldChallenge
           ? { type: 'CHALLENGE' }
           : { type: 'PASS' };
-      } else if (gameState.aiHand > 0) {
+      } else if (gameState.aiHand.length > 0) {
         // AI's turn to play cards
         alternativesConsidered = ['PASS', 'PLAY_CARDS'];
         
@@ -140,8 +140,7 @@ export class MLIntegrationService {
             bluffProbability: mlInsights.patterns.likelyToBluff * difficultyModifiers.bluffProbabilityMultiplier,
             challengeProbability: mlInsights.patterns.likelyToChallenge,
             patternConfidence: mlInsights.patterns.likelyToBluff,
-            riskLevel: mlInsights.personalityTraits.riskTolerance * difficultyModifiers.riskToleranceMultiplier,
-            sentimentImpact: mlInsights.chatAnalysis?.sentiment || 0
+            riskLevel: mlInsights.personalityTraits.riskTolerance * difficultyModifiers.riskToleranceMultiplier
           },
           decision,
           alternativesConsidered
@@ -544,32 +543,28 @@ export class MLIntegrationService {
   }
 
   private calculateReward(action: GameAction, result: boolean, gameState: GameState): number {
-    let baseReward = result ? 1 : -1;
+    let reward = 0;
 
-    // Adjust reward based on action type and game state
     switch (action.type) {
       case 'CHALLENGE':
-        // Higher reward/penalty for successful/failed challenges
-        baseReward *= 1.5;
+        reward = result ? 10 : -5;
         break;
       case 'PLAY_CARDS':
-        // Reward based on number of cards played
         if (action.payload?.cards) {
-          baseReward *= (1 + action.payload.cards.length * 0.2);
+          reward = result ? action.payload.cards.length * 2 : -action.payload.cards.length;
         }
-        // Extra reward for successful bluffs
-        if (result && action.payload?.cards.some(card => card.value !== action.payload.declaredValue)) {
-          baseReward *= 1.3;
-        }
+        break;
+      case 'PASS':
+        reward = 0;
         break;
     }
 
-    // Adjust based on game progress
-    const totalCards = gameState.playerHand.length + gameState.aiHand;
-    const gameProgress = 1 - (totalCards / 52);
-    baseReward *= (1 + gameProgress * 0.5); // Higher stakes late game
+    // Adjust reward based on game state
+    if (gameState.aiHand.length === 0) {
+      reward += 20; // Win bonus
+    }
 
-    return baseReward;
+    return reward;
   }
 
   private async selectCardsForPlay(

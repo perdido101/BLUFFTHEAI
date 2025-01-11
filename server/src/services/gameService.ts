@@ -28,7 +28,7 @@ export class GameService {
 
     return {
       playerHand: deck.slice(0, halfDeck),
-      aiHand: halfDeck,
+      aiHand: deck.slice(halfDeck),
       centerPile: [],
       currentTurn: 'player',
       lastPlay: undefined
@@ -118,7 +118,7 @@ export class GameService {
 
   checkWinCondition(gameState: GameState): 'player' | 'ai' | null {
     if (gameState.playerHand.length === 0) return 'player';
-    if (gameState.aiHand === 0) return 'ai';
+    if (gameState.aiHand.length === 0) return 'ai';
     return null;
   }
 }

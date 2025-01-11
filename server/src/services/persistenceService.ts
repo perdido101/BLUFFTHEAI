@@ -32,4 +32,24 @@ export class PersistenceService {
   async loadQTable() {
     return await this.load('qTable') || {};
   }
+
+  async saveModelHistory(history: any) {
+    await this.save('modelHistory', history);
+  }
+
+  async loadPatterns() {
+    return await this.load('patterns') || [];
+  }
+
+  async savePatterns(patterns: any) {
+    await this.save('patterns', patterns);
+  }
+
+  async loadPerformanceMetrics() {
+    return await this.load('performanceMetrics') || {};
+  }
+
+  async savePerformanceMetrics(metrics: any) {
+    await this.save('performanceMetrics', metrics);
+  }
 } 

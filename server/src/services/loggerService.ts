@@ -2,14 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { LogRotationService } from './logRotationService';
 
-interface ErrorLog {
+export interface ErrorLog {
   timestamp: number;
   error: Error;
   context: any;
   severity: 'low' | 'medium' | 'high';
 }
 
-interface RequestLog {
+export interface RequestLog {
   timestamp: number;
   method: string;
   path: string;

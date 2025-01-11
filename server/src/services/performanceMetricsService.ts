@@ -238,4 +238,11 @@ export class PerformanceMetricsService {
   getCurrentGameStats(): GameMetrics | null {
     return this.currentGame ? { ...this.currentGame } : null;
   }
+
+  private calculateHandSizeMetrics(gameState: GameState) {
+    return {
+      playerHandSize: gameState.playerHand.length,
+      aiHandSize: gameState.aiHand.length
+    };
+  }
 } 
