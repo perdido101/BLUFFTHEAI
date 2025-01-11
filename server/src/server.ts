@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Anthropic from '@anthropic-ai/sdk';
@@ -14,31 +14,77 @@ import { ModelMonitoringService } from './services/modelMonitoringService';
 import { PerformanceMetricsService } from './services/performanceMetricsService';
 import { ReinforcementLearningService } from './services/reinforcementLearningService';
 import { AdaptiveDifficultyService } from './services/adaptiveDifficultyService';
+import { setupSecurity } from './middleware/security';
+import * as os from 'os';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Apply security middleware
+setupSecurity(app);
+
 app.use(cors());
 app.use(express.json());
 
 // Add logging middleware
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint for Railway
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+// Enhanced health check endpoints
+app.get('/health', (_req: Request, res: Response) => {
+  const healthCheck = {
+    status: 'healthy',
+    timestamp: new Date(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV
+  };
+  res.status(200).json(healthCheck);
 });
 
-// Add error handling middleware
-app.use((err: Error, req: any, res: any, next: any) => {
+app.get('/health/memory', (_req: Request, res: Response) => {
+  const memoryUsage = process.memoryUsage();
+  const memoryHealth = {
+    status: 'healthy',
+    heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+    heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+    rss: Math.round(memoryUsage.rss / 1024 / 1024),
+    threshold: Number(process.env.MEMORY_THRESHOLD) || 1024
+  };
+  
+  if (memoryUsage.heapUsed > (Number(process.env.MEMORY_THRESHOLD) || 1024) * 1024 * 1024) {
+    memoryHealth.status = 'warning';
+  }
+  
+  res.status(200).json(memoryHealth);
+});
+
+app.get('/health/load', (_req: Request, res: Response) => {
+  const eventLoopLag = process.hrtime();
+  setImmediate(() => {
+    const lag = process.hrtime(eventLoopLag);
+    const lagMs = (lag[0] * 1e9 + lag[1]) / 1e6;
+    
+    res.status(200).json({
+      status: lagMs < 100 ? 'healthy' : 'warning',
+      eventLoopLag: Math.round(lagMs),
+      cpuLoad: os.loadavg(),
+      freeMemory: os.freemem() / 1024 / 1024
+    });
+  });
+});
+
+// Error handling middleware
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error('Error:', err);
   res.status(500).json({ error: err.message });
-});
+};
+
+app.use(errorHandler);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -127,7 +173,7 @@ async function initializeServer() {
         const result = action.type === 'CHALLENGE' 
           ? !gameState.lastPlay?.actualCards.some((card: Card) => card.value !== gameState.lastPlay?.declaredCards)
           : true;
-        await mlIntegration.updateModel(action, result, gameState);
+        await mlIntegration.updateModel(gameState, result ? 'win' : 'loss');
         await performanceMetrics.recordMove('player', action, result, gameState);
       } else {
         await performanceMetrics.recordMove('player', action, true, gameState);
@@ -150,7 +196,7 @@ async function initializeServer() {
           const result = aiAction.type === 'CHALLENGE'
             ? !updatedState.lastPlay?.actualCards.some((card: Card) => card.value !== updatedState.lastPlay?.declaredCards)
             : true;
-          await mlIntegration.updateModel(aiAction, result, updatedState);
+          await mlIntegration.updateModel(updatedState, result ? 'win' : 'loss');
           await performanceMetrics.recordMove('ai', aiAction, result, updatedState);
         } else {
           await performanceMetrics.recordMove('ai', aiAction, true, updatedState);
