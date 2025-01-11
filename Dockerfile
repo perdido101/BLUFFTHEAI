@@ -20,9 +20,15 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Build server (with verbose output)
+# Build server (with debugging)
 WORKDIR /app/server
-RUN npm run build --verbose
+RUN ls -la
+RUN echo "Contents of src directory:"
+RUN ls -la src || echo "src directory not found"
+RUN echo "Running tsc directly:"
+RUN npx tsc --version
+RUN npx tsc --project tsconfig.json --listFiles
+RUN npx tsc --project tsconfig.json
 
 # Build client
 WORKDIR /app/client
