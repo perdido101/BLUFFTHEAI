@@ -262,68 +262,33 @@ export class MLIntegrationService {
     }
   }
 
-  private async getMLInsights(gameState: GameState, playerChat?: string): Promise<MLInsights> {
+  async getMLInsights(gameState: GameState, playerChat?: string): Promise<MLInsights> {
     try {
-      const cachedPredictions = await this.errorRecovery.withFallback(
-        async () => this.cacheService.getCachedModelPrediction(gameState, this.recentMoves),
-        async () => null,
-        'cache'
-      );
-
-      if (cachedPredictions) {
-        return cachedPredictions;
-      }
-
       const [patterns, playerStats, optimalStrategy, personalityTraits] = await Promise.all([
-        this.patternRecognition.getPrediction(),
+        this.patternRecognition.analyzePatterns(gameState),
         this.aiStrategy.getPlayerAnalysis(),
         this.adaptiveLearning.getOptimalStrategy(gameState),
         this.aiPersonality.getPersonalityTraits()
       ]);
 
-      const insights: MLInsights = {
-        patterns,
-        playerStats: {
-          winRate: playerStats.winRate || 0,
-          bluffSuccessRate: playerStats.bluffSuccessRate || 0,
-          challengeSuccessRate: playerStats.challengeSuccessRate || 0,
-          totalGames: playerStats.totalGames || 0,
-          averageMovesPerGame: playerStats.averageMovesPerGame || 0
-        },
-        optimalStrategy: {
-          recommendedAction: optimalStrategy.recommendedAction || 'PASS',
-          confidence: optimalStrategy.confidence || 0.5,
-          alternativeActions: optimalStrategy.alternativeActions || []
-        },
-        personalityTraits: {
-          aggressiveness: personalityTraits.aggressiveness || 0,
-          deceptiveness: personalityTraits.deceptiveness || 0,
-          confidence: personalityTraits.confidence || 0,
-          impulsiveness: personalityTraits.impulsiveness || 0,
-          adaptability: personalityTraits.adaptability || 0
-        }
-      };
+      const difficultyModifiers = await this.adaptiveDifficulty.getDifficultyModifiers(gameState);
 
+      let chatAnalysis: ChatAnalysis | undefined;
       if (playerChat) {
-        insights.chatAnalysis = await this.analyzeChatMessage(playerChat, gameState);
+        chatAnalysis = await this.chatAnalysis.analyzeChatMessage(playerChat);
       }
 
-      await this.errorRecovery.withRetry(
-        async () => this.cacheService.cacheModelPrediction(
-          gameState,
-          this.recentMoves,
-          insights
-        ),
-        'cache'
-      );
+      const insights: MLInsights = {
+        patterns,
+        playerStats,
+        optimalStrategy,
+        personalityTraits,
+        chatAnalysis
+      };
 
       return insights;
     } catch (error) {
-      console.error('Error in getMLInsights:', error);
-      return this.errorHandler.handlePredictionError(
-        error instanceof Error ? error : new Error(String(error)),
-        gameState
-      );
+      throw this.errorHandler.handleMLError(error);
     }
   }
 

@@ -31,4 +31,6 @@ export interface GameHistory {
   winner: 'ai' | 'player' | null;
   duration: number;
   finalState: GameState;
-} 
+}
+
+export { Card } from './Card'; 
