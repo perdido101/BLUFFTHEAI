@@ -17,7 +17,7 @@ ENV NODE_ENV=production \
     PYTHONUNBUFFERED=1
 
 # Copy only package files
-COPY package.json package-lock.json* ./
+COPY package*.json ./
 
 # Install production dependencies only
 RUN set -eux; \
@@ -35,10 +35,7 @@ RUN set -eux; \
     npm install -g npm@10.2.4 && \
     npm --version && \
     # Install production dependencies with proper error handling
-    if [ ! -f package-lock.json ]; then \
-        echo "Error: package-lock.json not found" && exit 1; \
-    fi && \
-    npm ci --production --prefer-offline && \
+    npm install --production --prefer-offline && \
     # Verify critical dependencies
     if [ ! -d node_modules ]; then \
         echo "Error: Failed to install dependencies" && exit 1; \
@@ -65,7 +62,7 @@ ENV NODE_ENV=development \
     PYTHONUNBUFFERED=1
 
 # Copy only package files
-COPY package.json package-lock.json* ./
+COPY package*.json ./
 
 # Install all dependencies including dev
 RUN set -eux; \
@@ -83,10 +80,7 @@ RUN set -eux; \
     npm install -g npm@10.2.4 && \
     npm --version && \
     # Install all dependencies with proper error handling
-    if [ ! -f package-lock.json ]; then \
-        echo "Error: package-lock.json not found" && exit 1; \
-    fi && \
-    npm ci --prefer-offline && \
+    npm install --prefer-offline && \
     # Verify critical dependencies
     if [ ! -d node_modules ]; then \
         echo "Error: Failed to install dependencies" && exit 1; \
