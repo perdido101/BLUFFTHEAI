@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { GameHistory } from '../types';
 
 const DATA_DIR = path.join(__dirname, '../../data');
 const LEARNING_FILE = path.join(DATA_DIR, 'learning.json');
@@ -17,6 +18,20 @@ interface PerformanceMetrics {
 
 interface Patterns {
   [key: string]: any;
+}
+
+export interface PersistenceService {
+  // Existing methods
+  loadModelHistory(): Promise<any>;
+  saveModelHistory(data: any): Promise<void>;
+  loadPatterns(): Promise<any>;
+  savePatterns(patterns: any): Promise<void>;
+  loadPerformanceMetrics(): Promise<any>;
+  savePerformanceMetrics(metrics: any): Promise<void>;
+  
+  // New game history methods
+  saveGameHistory(history: GameHistory): Promise<void>;
+  loadGameHistory(): Promise<GameHistory[]>;
 }
 
 export class PersistenceService {
@@ -69,5 +84,13 @@ export class PersistenceService {
 
   async savePerformanceMetrics(metrics: PerformanceMetrics) {
     await this.save('performanceMetrics', metrics);
+  }
+
+  async saveGameHistory(history: GameHistory) {
+    await this.save('gameHistory', history);
+  }
+
+  async loadGameHistory(): Promise<GameHistory[]> {
+    return await this.load('gameHistory') || [];
   }
 } 

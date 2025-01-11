@@ -17,91 +17,52 @@ export class ErrorHandlingService {
   };
 
   validateGameState(gameState: GameState): void {
-    if (!gameState) {
-      throw new Error('Invalid game state: Game state is null or undefined');
-    }
-
-    if (typeof gameState.aiHand !== 'number') {
-      throw new Error('Invalid game state: AI hand is not a number');
-    }
-
-    if (gameState.lastPlay && typeof gameState.lastPlay.player !== 'string') {
-      throw new Error('Invalid game state: Last play player is not a string');
+    if (!gameState.aiHand || !gameState.playerHand || !Array.isArray(gameState.centerPile)) {
+      throw new Error('Invalid game state: missing required arrays');
     }
   }
 
   validateAction(action: GameAction): void {
-    if (!action) {
-      throw new Error('Invalid action: Action is null or undefined');
-    }
-
     if (!action.type) {
-      throw new Error('Invalid action: Action type is missing');
+      throw new Error('Invalid action: missing type');
     }
 
-    if (!['PASS', 'CHALLENGE', 'PLAY_CARDS'].includes(action.type)) {
-      throw new Error(`Invalid action: Unknown action type ${action.type}`);
-    }
-
-    if (action.type === 'PLAY_CARDS' && (!action.cards || !Array.isArray(action.cards))) {
-      throw new Error('Invalid action: Play cards action missing cards array');
+    if (action.type === 'PLAY_CARDS') {
+      if (!action.payload || !action.payload.cards || !action.payload.declaredValue) {
+        throw new Error('Invalid PLAY_CARDS action: missing payload data');
+      }
     }
   }
 
-  handleCacheError(error: Error, operation: string): void {
-    this.logError(error, false, `Cache operation failed: ${operation}`);
-    // Continue execution - cache errors are non-fatal
+  handleCacheError(error: Error, context: string): void {
+    console.error(`Cache error in ${context}:`, error);
   }
 
   handleDecisionError(error: Error, gameState: GameState): GameAction {
-    this.logError(error, true, 'Decision making failed');
-    
-    // Fallback to safe default action
-    return {
-      type: 'PASS'
-    };
+    console.error('Decision error:', error);
+    // Default to PASS on error
+    return { type: 'PASS' };
   }
 
   handlePredictionError(error: Error, gameState: GameState): any {
-    this.logError(error, true, 'ML prediction failed');
-    
-    // Return fallback predictions
+    console.error('Prediction error:', error);
     return {
-      patterns: {
-        likelyToBluff: 0.5,
-        likelyToChallenge: 0.5
-      },
-      playerStats: {
-        bluffFrequency: 0.5,
-        challengeFrequency: 0.5
-      },
-      optimalStrategy: {
-        recommendedAction: 'PASS',
-        confidence: 0.5
-      },
-      personalityTraits: {
-        riskTolerance: 0.5,
-        aggressiveness: 0.5
-      }
+      patterns: { likelyToBluff: 0, likelyToChallenge: 0 },
+      playerStats: {},
+      optimalStrategy: {},
+      personalityTraits: {}
     };
   }
 
-  logError(error: Error, isCritical: boolean, context: string): void {
-    // Update error stats
-    this.errorStats.totalErrors++;
-    const errorType = error.constructor.name;
-    this.errorStats.errorsByType[errorType] = (this.errorStats.errorsByType[errorType] || 0) + 1;
-    this.errorStats.lastError = {
-      message: `${context}: ${error.message}`,
-      timestamp: new Date()
+  logError(error: Error, isCritical: boolean, message?: string): void {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      stack: error.stack,
+      critical: isCritical,
+      message
     };
-
-    // Log the error
-    if (isCritical) {
-      console.error(`Critical Error - ${context}:`, error);
-    } else {
-      console.warn(`Warning - ${context}:`, error);
-    }
+    console.error('Error logged:', logEntry);
   }
 
   getErrorStats(): ErrorStats {

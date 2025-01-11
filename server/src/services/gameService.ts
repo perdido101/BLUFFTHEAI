@@ -83,7 +83,7 @@ export class GameService {
         if (wasBluffing) {
           // Last player was bluffing, they pick up the pile
           if (gameState.lastPlay.player === 'ai') {
-            newState.aiHand += gameState.centerPile.length;
+            newState.aiHand = [...newState.aiHand, ...gameState.centerPile];
           } else {
             newState.playerHand = [...newState.playerHand, ...gameState.centerPile];
           }
