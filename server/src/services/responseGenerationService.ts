@@ -292,7 +292,7 @@ export class ResponseGenerationService {
     let response = template;
 
     // Replace game state variables
-    if (context.lastAction?.type === 'PLAY_CARDS') {
+    if (context.lastAction?.type === 'PLAY_CARDS' && context.lastAction.payload?.declaredValue) {
       response = response.replace('{value}', context.lastAction.payload.declaredValue);
     }
 

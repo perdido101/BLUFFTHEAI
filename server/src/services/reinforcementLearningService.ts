@@ -124,7 +124,7 @@ export class ReinforcementLearningService {
       const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
       
       for (const count of cardCounts) {
-        if (count <= gameState.aiHand) {
+        if (count <= gameState.aiHand.length) {
           for (const value of values) {
             if (!gameState.lastPlay || value > gameState.lastPlay.declaredCards) {
               actions.push({

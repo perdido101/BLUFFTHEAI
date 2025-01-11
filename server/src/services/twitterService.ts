@@ -27,7 +27,7 @@ ${this.generateGameStatus(gameState)}
   private generateGameStatus(gameState: GameState): string {
     if (gameState.playerHand.length === 0) {
       return "🏆 Player wins! The AI has been outsmarted!";
-    } else if (gameState.aiHand === 0) {
+    } else if (gameState.aiHand.length === 0) {
       return "🤖 AI wins! Better luck next time, human!";
     }
     return "The game continues... Who will win? 🤔";

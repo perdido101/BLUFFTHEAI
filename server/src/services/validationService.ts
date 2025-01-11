@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
 
 interface ValidationSchema {
+  [key: string]: Joi.ObjectSchema | undefined;
   query?: Joi.ObjectSchema;
   params?: Joi.ObjectSchema;
   body?: Joi.ObjectSchema;
@@ -10,15 +11,17 @@ interface ValidationSchema {
 export const validate = (schema: ValidationSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const validationResults = ['query', 'params', 'body'].map(key => {
-      if (schema[key]) {
-        return schema[key].validate(req[key], { abortEarly: false });
+      const schemaForKey = schema[key];
+      if (schemaForKey) {
+        const reqValue = req[key as keyof Request];
+        return schemaForKey.validate(reqValue, { abortEarly: false });
       }
       return { error: null };
     });
 
     const errors = validationResults
       .filter(result => result.error)
-      .map(result => result.error.details)
+      .map(result => result.error!.details)
       .flat();
 
     if (errors.length > 0) {
@@ -32,6 +35,7 @@ export const validate = (schema: ValidationSchema) => {
     }
 
     next();
+    return; // Explicit return for TypeScript
   };
 };
 
