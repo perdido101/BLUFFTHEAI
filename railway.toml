@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd server && npm install && npm run build"
+buildCommand = "cd server && npm install --legacy-peer-deps && npm run build"
 
 [deploy]
 startCommand = "cd server && npm start"
@@ -10,9 +10,10 @@ restartPolicyType = "on_failure"
 
 [nixpacks]
 node-version = "18"
+nixPackages = ["nodejs", "npm"]
 
 [service.frontend]
-buildCommand = "cd client && npm install && npm run build"
+buildCommand = "cd client && npm install --legacy-peer-deps && npm run build"
 startCommand = "cd client && npx serve -s build"
 healthcheckPath = "/"
 healthcheckTimeout = 100
