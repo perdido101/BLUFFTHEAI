@@ -10,7 +10,7 @@ interface StateActionPair {
     lastPlayCount?: number;
   };
   action: {
-    type: string;
+    type: 'PLAY_CARDS' | 'CHALLENGE' | 'PASS';
     cardCount?: number;
     declaredValue?: string;
   };
@@ -248,52 +248,71 @@ export class ReinforcementLearningService {
     };
   }
 
-  private selectBestCards(
-    gameState: GameState,
-    currentValue: string | null,
-    shouldBluff: boolean,
-    riskTolerance: number,
-    opponentChallengeProb: number
-  ): { cards: Card[], declaredValue: string } | null {
-    const aiCards = gameState.aiHand;
-    if (aiCards.length === 0) return null;
-
-    // Group cards by value
-    const cardGroups = this.groupCardsByValue(aiCards);
+  private groupCardsByValue(cards: Card[]): { [key: string]: { value: string, cards: Card[] } } {
+    const groups: { [key: string]: { value: string, cards: Card[] } } = {};
     
-    // If we're following a play, we need to match or beat the current value
-    if (currentValue) {
-      const validGroups = this.getValidCardGroups(cardGroups, currentValue);
-      
-      if (validGroups.length > 0) {
-        // Play real cards if we have them
-        const bestGroup = this.selectBestCardGroup(validGroups, riskTolerance);
-        return {
-          cards: bestGroup.cards,
-          declaredValue: bestGroup.value
-        };
-      } else if (shouldBluff && opponentChallengeProb < 0.7) {
-        // Bluff if conditions are favorable
-        return this.createBluff(aiCards, currentValue, riskTolerance);
+    cards.forEach(card => {
+      if (!groups[card.value]) {
+        groups[card.value] = { value: card.value, cards: [] };
       }
-      
-      return null; // Pass if we can't play legally and shouldn't bluff
-    }
+      groups[card.value].cards.push(card);
+    });
 
-    // If we're starting a new round, choose the best cards to play
-    const bestGroup = this.selectBestCardGroup(Object.values(cardGroups), riskTolerance);
-    if (shouldBluff && opponentChallengeProb < 0.5) {
-      // Sometimes bluff with a higher value
-      const bluffValue = this.selectBluffValue(bestGroup.value);
-      return {
-        cards: bestGroup.cards,
-        declaredValue: bluffValue
-      };
-    }
+    return groups;
+  }
+
+  private getValidCardGroups(
+    groups: { [key: string]: { value: string, cards: Card[] } },
+    currentValue: string
+  ): { value: string, cards: Card[] }[] {
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const currentIdx = values.indexOf(currentValue);
+    
+    return Object.values(groups).filter(group => 
+      values.indexOf(group.value) >= currentIdx
+    );
+  }
+
+  private selectBestCardGroup(
+    groups: { value: string, cards: Card[] }[],
+    riskTolerance: number
+  ): { value: string, cards: Card[] } {
+    // Sort groups by size (prefer playing more cards) and value
+    return groups.sort((a, b) => {
+      if (a.cards.length !== b.cards.length) {
+        return b.cards.length - a.cards.length;
+      }
+      const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+      return values.indexOf(a.value) - values.indexOf(b.value);
+    })[0];
+  }
+
+  private createBluff(
+    cards: Card[],
+    currentValue: string,
+    riskTolerance: number
+  ): { cards: Card[], declaredValue: string } {
+    // Select lowest value cards for bluffing
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const currentIdx = values.indexOf(currentValue);
+    const bluffValue = values[Math.min(currentIdx + 1, values.length - 1)];
+    
+    // Use 1-2 cards for bluffing based on risk tolerance
+    const numCards = riskTolerance > 0.7 ? 2 : 1;
+    const bluffCards = cards
+      .sort((a, b) => values.indexOf(a.value) - values.indexOf(b.value))
+      .slice(0, numCards);
 
     return {
-      cards: bestGroup.cards,
-      declaredValue: bestGroup.value
+      cards: bluffCards,
+      declaredValue: bluffValue
     };
+  }
+
+  private selectBluffValue(actualValue: string): string {
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const currentIdx = values.indexOf(actualValue);
+    const maxBluffIdx = Math.min(currentIdx + 2, values.length - 1);
+    return values[maxBluffIdx];
   }
 } 
