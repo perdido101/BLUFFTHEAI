@@ -31,11 +31,11 @@ RUN set -eux; \
         make \
         g++ \
     && \
-    # Update npm to a compatible version
-    npm install -g npm@10.2.4 && \
+    # Update npm and install global tools
+    npm install -g npm@10.2.4 rimraf typescript && \
     npm --version && \
     # Install production dependencies with proper error handling
-    npm install --production --prefer-offline && \
+    npm install --omit=dev --prefer-offline && \
     # Verify critical dependencies
     if [ ! -d node_modules ]; then \
         echo "Error: Failed to install dependencies" && exit 1; \
@@ -76,8 +76,8 @@ RUN set -eux; \
         make \
         g++ \
     && \
-    # Update npm to a compatible version
-    npm install -g npm@10.2.4 && \
+    # Update npm and install global tools
+    npm install -g npm@10.2.4 rimraf typescript && \
     npm --version && \
     # Install all dependencies with proper error handling
     npm install --prefer-offline && \
@@ -118,8 +118,8 @@ RUN set -eux; \
         g++ \
         git \
     && \
-    # Update npm to a compatible version
-    npm install -g npm@10.2.4 && \
+    # Update npm and install global tools
+    npm install -g npm@10.2.4 rimraf typescript && \
     npm --version && \
     # Setup Python symlink
     if [ ! -f /usr/bin/python ]; then \
@@ -161,8 +161,10 @@ RUN set -eux; \
     if [ ! -f ./node_modules/.bin/tsc ]; then \
         echo "Error: TypeScript compiler not found" && exit 1; \
     fi && \
+    # Clean dist directory
+    rimraf dist && \
     # Run build with proper error handling
-    npm run build || { \
+    ./node_modules/.bin/tsc --project tsconfig.json || { \
         echo "Error: Build failed"; \
         exit 1; \
     } && \
