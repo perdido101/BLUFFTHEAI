@@ -135,6 +135,8 @@ RUN set -eux; \
 
 # Copy configuration files first
 COPY tsconfig.json ./
+
+# Copy only package files
 COPY package*.json ./
 
 # Verify configuration files
